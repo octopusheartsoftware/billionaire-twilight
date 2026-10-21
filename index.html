@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Billionaire Twilight</title>
+<meta name="theme-color" content="#1b1e21">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a billionaire's war room. Rival dossiers across the top, the world in the
+   middle, your tools in a side rail (a bottom sheet on phones). */
+:root{
+  --bg:#1b1e21; --panel:#25292d; --panel-2:#2f3439; --border:#3b4147; --void:#131518;
+  --sea:#14181b; --land:#3a4147; --land-hi:#475059; --edge:#1b1e21;
+  --ink:#e9ecee; --muted:#98a1a8; --faint:#6b747b;
+  --gold:#e0b23a; --gold-dim:rgba(224,178,58,.28); --move:#5fbf6b; --move-dim:rgba(95,191,107,.35);
+  --hint:rgba(95,191,107,.22); --danger:#e5534b; --sea-line:#3c6e91;
+  --f-display:"Chakra Petch","Trebuchet MS",sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{height:100%;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--bg)}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;overflow:hidden;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+.screen{height:100%;display:flex;flex-direction:column}
+.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{font-family:var(--f-display);margin:0;letter-spacing:.02em;text-wrap:balance}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);font-weight:600;cursor:pointer}
+.btn.gold{background:var(--gold);color:#1b1e21;border-color:var(--gold)}
+.btn.ghosty{background:transparent}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.icon-btn:focus-visible,input:focus-visible,select:focus-visible,.slot:focus-visible,.tok:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+input,select{font:inherit;color:var(--ink);background:var(--void);border:1px solid var(--border);border-radius:8px;min-height:44px;padding:0 12px;width:100%}
+.icon-btn{width:40px;height:40px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);display:grid;place-items:center;cursor:pointer;font-family:var(--f-mono)}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;max-width:min(92vw,520px);font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+
+/* ---------- home + lobby ---------- */
+.home{height:100%;overflow:auto;display:flex;justify-content:center}
+.home-inner{width:100%;max-width:460px;padding-block:40px 40px;display:flex;flex-direction:column;gap:22px}
+.brand h1{font-size:40px;line-height:1.05;font-weight:700}
+.brand h1 span{color:var(--gold)}
+.brand p{color:var(--muted);margin:10px 0 0;max-width:40ch}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:10px;align-items:center}
+.row > *{min-width:0}
+.err{color:var(--danger);font-size:14px;min-height:1em}
+.code-big{font-family:var(--f-mono);font-size:38px;letter-spacing:.3em;color:var(--gold)}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.plist li{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel-2);border-radius:8px}
+.plist .tag{margin-left:auto;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.plist .tag.ok{color:var(--move)}
+
+/* ---------- game layout ---------- */
+.topbar{display:flex;align-items:center;gap:10px;padding-block:8px;background:var(--panel);border-bottom:1px solid var(--border)}
+.topbar .who{display:flex;align-items:center;gap:8px;min-width:48px}
+.topbar .who b{font-family:var(--f-display);font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .turn{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);white-space:nowrap}
+.timer{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:15px;min-width:52px;text-align:center;padding:5px 8px;border-radius:6px;background:var(--panel-2)}
+.timer.low{color:var(--danger)}
+.spacer{flex:1}
+.badge{font-family:var(--f-mono);font-size:11px;background:var(--gold);color:#1b1e21;border-radius:10px;padding:0 6px;margin-left:4px}
+
+.rivals{display:flex;gap:8px;overflow-x:auto;padding-block:8px;background:var(--bg);border-bottom:1px solid var(--border);scrollbar-width:thin}
+.rival{flex:0 0 auto;width:212px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s, box-shadow .15s}
+.rival.drop{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-dim)}
+.rival .nm{display:flex;align-items:center;gap:6px;font-family:var(--f-display);font-weight:600;font-size:15px}
+.slots{display:flex;gap:6px}
+.slot{width:40px;height:40px;border-radius:6px;background:#d9dcdf14;border:1px dashed var(--border);display:grid;place-items:center;overflow:hidden;flex:none}
+.slot img{width:100%;height:100%;image-rendering:auto}
+.slot.filled{border-style:solid;border-color:var(--land-hi)}
+.slot .lab{font-family:var(--f-mono);font-size:8.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+.pips{display:flex;gap:3px}
+.pip{width:22px;height:22px;border-radius:4px;background:var(--void);display:grid;place-items:center;opacity:.35}
+.pip.on{opacity:1;background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--gold-dim)}
+.pip svg{width:16px;height:16px}
+.intel{font-size:12px;line-height:1.35;color:var(--muted);display:grid;grid-template-columns:auto 1fr;gap:0 8px}
+.intel b{font-weight:500;color:var(--faint);font-family:var(--f-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding-top:1px}
+.intel span{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.main{flex:1;min-height:0;display:flex}
+.mapwrap{flex:1;min-width:0;position:relative;background:var(--sea);touch-action:none;overflow:hidden}
+svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-select:none}
+.zoomctl{position:absolute;right:max(10px,env(safe-area-inset-right,0px));top:10px;display:flex;flex-direction:column;gap:6px}
+.maphint{position:absolute;left:10px;top:10px;right:64px;pointer-events:none;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.maphint .pill{background:rgba(19,21,24,.86);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13.5px;max-width:100%}
+.maphint .pill b{color:var(--gold);font-weight:600}
+.legend{position:absolute;left:10px;bottom:10px;display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);background:rgba(19,21,24,.8);border-radius:6px;padding:4px 8px;pointer-events:none}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+.rail{width:300px;flex:none;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;gap:12px;padding:12px;overflow:auto}
+.rail h3{font-size:15px;font-weight:600}
+.tray{display:flex;flex-wrap:wrap;gap:8px;min-height:52px}
+.tok{position:relative;width:52px;height:52px;border-radius:8px;border:1px solid var(--border);background:var(--void);padding:0;cursor:grab;touch-action:none;overflow:hidden}
+.tok img{width:100%;height:100%;display:block;pointer-events:none}
+.tok .cool{position:absolute;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;font-family:var(--f-mono);font-size:13px;pointer-events:none}
+.tok.sel{outline:2px solid var(--gold)}
+.empty{color:var(--faint);font-size:13px}
+.items{display:flex;gap:8px}
+.item{flex:1;display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);cursor:pointer;text-align:left}
+.item img{width:36px;height:36px;border-radius:6px}
+.item b{font-family:var(--f-mono);font-size:16px}
+.item small{display:block;color:var(--muted);font-size:11.5px;line-height:1.2}
+.item.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-dim)}
+.item:disabled{opacity:.4;cursor:default}
+.mine{display:flex;gap:4px;flex-wrap:wrap}
+.mine .pip{width:30px;height:30px}
+.mine .pip svg{width:20px;height:20px}
+.actions{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.status{font-size:13.5px;color:var(--muted);min-height:2.6em}
+.status b{color:var(--ink);font-weight:600}
+.endbtn{background:linear-gradient(180deg,#f0c14d,#c9921f);color:#1b1e21;border:0;font-family:var(--f-display);font-size:17px;letter-spacing:.04em;animation:throb 1.6s ease-in-out infinite}
+@keyframes throb{50%{box-shadow:0 0 0 6px rgba(224,178,58,.25)}}
+
+/* map marks */
+.rg{stroke:var(--edge);stroke-width:.6px;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.rg.legal{fill:var(--move-dim)}
+.rg.target{fill:var(--move)}
+.rg.hint{fill:var(--hint)}
+.rg.vision{fill:rgba(224,178,58,.18)}
+.rg.oprg{fill:rgba(224,178,58,.5)}
+.rg.pulse{animation:pulse 1.4s ease-in-out infinite}
+.rg.home{stroke:var(--gold);stroke-width:1.6px}
+.rg.cur{fill:#5b6670}
+@keyframes pulse{0%,100%{fill:rgba(229,83,75,.12)}50%{fill:rgba(229,83,75,.55)}}
+.strait{stroke:#4f88b0;stroke-width:2px;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.route{fill:none;stroke:var(--sea-line);stroke-width:1.4px;stroke-dasharray:5 4;vector-effect:non-scaling-stroke}
+.route.mine{stroke:var(--move);stroke-width:2.4px}
+.lbl{fill:var(--ink);font-family:var(--f-body);font-weight:500;text-anchor:middle;dominant-baseline:middle;pointer-events:none;paint-order:stroke;stroke:var(--sea);stroke-linejoin:round;opacity:.85}
+@media (prefers-reduced-motion:reduce){.rg.pulse{animation:none;fill:rgba(229,83,75,.4)}.endbtn{animation:none}}
+
+/* overlays */
+.overlay{position:fixed;inset:0;z-index:40;background:rgba(10,12,14,.72);display:flex;align-items:center;justify-content:center;padding:16px}
+.dialog{width:100%;max-width:440px;max-height:calc(100% - 32px);overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.dialog.wide{max-width:760px}
+.report-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.report-list .grp{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:10px 0 4px}
+.report-list li.e{display:flex;gap:10px;padding:5px 0;font-size:14px;border-bottom:1px solid #ffffff08}
+.report-list .tg{flex:none;width:58px;font-family:var(--f-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding-top:3px}
+.report-list .hot .tg{color:var(--danger)}
+.report-list .pub .tg{color:var(--gold)}
+.big{font-family:var(--f-display);font-size:30px;font-weight:700;color:var(--gold);line-height:1.1}
+.replay{display:flex;flex-direction:column;gap:10px}
+.replay svg{width:100%;height:auto;background:var(--sea);border-radius:10px}
+.replay input[type=range]{padding:0;min-height:28px}
+
+/* ---------- phones ---------- */
+@media (max-width:820px){
+  .main{flex-direction:column}
+  .rail{width:auto;border-left:0;border-top:1px solid var(--border);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;overflow:visible;
+    padding-block:8px;padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
+  .rail h3,.rail .tip{display:none}
+  #sec-res{grid-column:1;grid-row:1;align-self:center} #sec-items{grid-column:2;grid-row:1} #sec-ids{grid-column:1 / -1;grid-row:2}
+  #my-res{margin-top:0!important}
+  .mine .pip{width:26px;height:26px}.mine .pip svg{width:18px;height:18px}
+  .items{margin-top:0!important;gap:6px}
+  .item{padding:3px 6px;gap:5px}.item img{width:30px;height:30px}.item small{display:none}
+  .tray{min-height:0;flex-wrap:nowrap;overflow-x:auto;gap:6px}
+  .tok{width:44px;height:44px;flex:none}
+  .empty{font-size:12px}
+  .rail .actions{grid-column:1 / -1;grid-row:3;flex-direction:row;align-items:center;margin-top:0;gap:8px}
+  .rail .actions .status{flex:1;min-width:0;min-height:0;font-size:12.5px;line-height:1.3}
+  .rail .actions .btn{flex:none;min-height:44px;padding:0 16px}
+  .rivals{padding-block:6px;gap:6px}
+  .rival{width:158px;padding:6px 8px;gap:4px}
+  .rival .nm{font-size:14px}
+  .slot{width:30px;height:30px}.slot .lab{font-size:7.5px}
+  .pip{width:18px;height:18px}.pip svg{width:13px;height:13px}
+  .intel{font-size:11px;line-height:1.25}
+  .topbar .turn{font-size:11px;flex:none}
+  .topbar .who{flex:1 1 auto}
+  .topbar .spacer{display:none}
+  #btn-report{padding:0 10px!important}
+  .legend{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- svg icon set: resources (placeholders until the real art arrives) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="res-0" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="3" fill="#7aa7d9"/><circle cx="8" cy="12" r="2.6" fill="#1b1e21"/><circle cx="16" cy="12" r="2.6" fill="#1b1e21"/><rect x="10.5" y="5" width="3" height="2" fill="#7aa7d9"/></symbol>
+    <symbol id="res-1" viewBox="0 0 24 24"><rect x="10" y="2" width="4" height="6" fill="#5b2235"/><path d="M8 10q0-2 4-2t4 2v11q0 1-1 1H9q-1 0-1-1z" fill="#8c2f4b"/><rect x="8.6" y="13" width="6.8" height="4" fill="#e9dcc0"/></symbol>
+    <symbol id="res-2" viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="5" ry="4" fill="#d9a23c"/><circle cx="6" cy="10" r="2.2" fill="#d9a23c"/><circle cx="10" cy="7" r="2.2" fill="#d9a23c"/><circle cx="14" cy="7" r="2.2" fill="#d9a23c"/><circle cx="18" cy="10" r="2.2" fill="#d9a23c"/></symbol>
+    <symbol id="res-3" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" fill="#c6993d"/><rect x="4.5" y="6.5" width="15" height="11" fill="#2f4f6e"/><path d="M4.5 17.5l5-6 3 3.5 2.5-2.5 4.5 5z" fill="#6f9a5a"/><circle cx="16" cy="9.5" r="1.5" fill="#f0d27a"/></symbol>
+    <symbol id="res-4" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="5" fill="#9fb3c2"/><rect x="9.5" y="5" width="5" height="9" rx="2.5" fill="#6fe0e6"/><rect x="9" y="17" width="6" height="1.6" fill="#5c6c78"/></symbol>
+    <symbol id="res-5" viewBox="0 0 24 24"><rect x="11" y="1.5" width="2" height="3.5" fill="#b9c3cb"/><circle cx="12" cy="1.8" r="1.4" fill="#e5534b"/><rect x="5" y="5" width="14" height="11" rx="2.5" fill="#b9c3cb"/><circle cx="9" cy="10" r="1.8" fill="#1b1e21"/><circle cx="15" cy="10" r="1.8" fill="#1b1e21"/><rect x="9" y="13" width="6" height="1.2" fill="#1b1e21"/><rect x="7" y="17" width="10" height="5" rx="1" fill="#2b2f33"/><rect x="11.2" y="17" width="1.6" height="3" fill="#e9ecee"/></symbol>
+    <symbol id="res-6" viewBox="0 0 24 24"><path d="M3 20a9 9 0 0 1 18 0z" fill="#7cc7d9" opacity=".45"/><path d="M3 20a9 9 0 0 1 18 0" fill="none" stroke="#bfe6ee" stroke-width="1.2"/><path d="M8 20v-5l-2-2M8 15l2-2M14 20v-6l2-2M14 16l-2-2" stroke="#ef7d6b" stroke-width="1.8" fill="none" stroke-linecap="round"/><rect x="2" y="20" width="20" height="2" fill="#8a6a46"/></symbol>
+    <symbol id="ico-star" viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8-6.3 3.8 1.7-7L2 9.2l7.1-.6z"/></symbol>
+    <symbol id="ico-ship" viewBox="0 0 24 24"><path d="M3 14h18l-3 6H6z"/><path d="M11 3h2v10h-2z"/><path d="M13 4l6 7h-6z"/></symbol>
+  </defs>
+</svg>
+
+<!-- HOME -->
+<section id="home" class="screen" hidden>
+  <div class="home pad">
+    <div class="home-inner">
+      <div class="brand">
+        <div class="eyebrow">Octopus Heart Software · playtest</div>
+        <h1>Billionaire <span>Twilight</span></h1>
+        <p>Race rival tech billionaires around the world for seven luxuries, then get back to your bunker and end it all. 2 to 7 players, one phone each.</p>
+      </div>
+      <div class="card">
+        <label class="eyebrow" for="in-name">Your name</label>
+        <input id="in-name" maxlength="14" autocomplete="nickname" placeholder="Name">
+        <button id="btn-host" class="btn gold">Host a game</button>
+      </div>
+      <div class="card">
+        <label class="eyebrow" for="in-code">Join with a room code</label>
+        <div class="row"><input id="in-code" maxlength="4" autocapitalize="characters" placeholder="ABCD" style="text-transform:uppercase;font-family:var(--f-mono);letter-spacing:.2em"><button id="btn-join" class="btn" style="flex:none">Join</button></div>
+      </div>
+      <div id="home-err" class="err" role="alert"></div>
+    </div>
+  </div>
+</section>
+
+<!-- LOBBY -->
+<section id="lobby" class="screen" hidden>
+  <div class="home pad">
+    <div class="home-inner">
+      <div>
+        <div class="eyebrow">Room code</div>
+        <div class="row" style="justify-content:space-between"><div id="lb-code" class="code-big"></div><button id="btn-invite" class="btn ghosty">Copy invite link</button></div>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between"><h3>Players</h3><span id="lb-count" class="eyebrow"></span></div>
+        <ul id="lb-players" class="plist"></ul>
+      </div>
+      <div class="card">
+        <label class="eyebrow" for="lb-name">Your name</label>
+        <div class="row"><input id="lb-name" maxlength="14"><button id="btn-rename" class="btn" style="flex:none">Save</button></div>
+        <label class="eyebrow" for="lb-timer">Step timer</label>
+        <select id="lb-timer"><option value="30">30 seconds per step</option><option value="45">45 seconds per step</option><option value="60">60 seconds per step</option><option value="0">No timer</option></select>
+        <div class="row"><button id="btn-ready" class="btn" style="flex:1">Ready</button><button id="btn-start" class="btn gold" style="flex:1">Start game</button></div>
+        <div class="row"><button class="btn ghosty sndbtn" style="flex:1">Sound on</button><button id="btn-leave" class="btn ghosty" style="flex:1">Leave room</button></div>
+      </div>
+      <div id="lb-err" class="err" role="alert"></div>
+    </div>
+  </div>
+</section>
+
+<!-- GAME -->
+<section id="game" class="screen" hidden>
+  <div class="topbar pad">
+    <div class="who"><span id="tb-dot" class="dot"></span><b id="tb-name"></b></div>
+    <span id="tb-turn" class="turn"></span>
+    <span class="spacer"></span>
+    <span id="tb-timer" class="timer">—</span>
+    <button id="btn-report" class="btn ghosty" style="min-height:38px;padding:0 12px">Report<span id="rep-badge" class="badge" hidden></span></button>
+  </div>
+  <div id="rivals" class="rivals pad" aria-label="Rival dossiers"></div>
+  <div class="main">
+    <div class="mapwrap" id="mapwrap">
+      <svg id="map" role="img" aria-label="World map"></svg>
+      <div class="maphint" id="maphint"></div>
+      <div class="zoomctl">
+        <button class="icon-btn" id="z-in" aria-label="Zoom in">+</button>
+        <button class="icon-btn" id="z-out" aria-label="Zoom out">−</button>
+        <button class="icon-btn" id="z-me" aria-label="Center on me">◎</button>
+        <button class="icon-btn" id="z-all" aria-label="Whole world">⤢</button>
+      </div>
+      <div class="legend"><span><i style="background:var(--move)"></i>Legal move</span><span><i style="background:var(--hint)"></i>Something next door</span><span><i style="background:rgba(224,178,58,.5)"></i>Operative</span><span><i style="background:rgba(229,83,75,.55)"></i>Located someone</span></div>
+    </div>
+    <aside class="rail">
+      <section id="sec-res">
+        <h3>Your resources</h3>
+        <div id="my-res" class="mine" style="margin-top:6px"></div>
+      </section>
+      <section id="sec-ids">
+        <h3>Identifiers</h3>
+        <div class="eyebrow tip" style="margin:2px 0 6px;text-transform:none;letter-spacing:0">Tap to make its owner's phone react. Drag onto a rival to assign.</div>
+        <div id="tray" class="tray"></div>
+      </section>
+      <section id="sec-items">
+        <h3>Items</h3>
+        <div class="items" style="margin-top:6px">
+          <button id="it-op" class="item"><img src="sprites/operative.png" alt=""><span><b id="it-op-n">0</b><small>Operatives</small></span></button>
+          <button id="it-trap" class="item"><img src="sprites/trap.png" alt=""><span><b id="it-trap-n">0</b><small>Traps</small></span></button>
+        </div>
+      </section>
+      <div class="actions">
+        <div id="status" class="status" aria-live="polite"></div>
+        <button id="btn-end" class="btn endbtn" hidden>End the world</button>
+        <button id="btn-done" class="btn gold">Done</button>
+        <button id="btn-change" class="btn ghosty" hidden>Change my move</button>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- report -->
+<div id="ov-report" class="overlay" hidden>
+  <div class="dialog wide" role="dialog" aria-label="Report">
+    <div class="row" style="justify-content:space-between"><h2>Report</h2><button class="icon-btn" id="rep-close" aria-label="Close">✕</button></div>
+    <ul id="rep-list" class="report-list"></ul>
+    <div class="row"><button class="btn ghosty sndbtn" style="flex:1">Sound on</button></div>
+  </div>
+</div>
+
+<!-- assign confirm -->
+<div id="ov-assign" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-label="Assign identifier">
+    <div class="row"><img id="as-img" alt="" style="width:72px;height:72px;border-radius:10px"><div><h2 id="as-title"></h2><p id="as-text" style="margin:4px 0 0;color:var(--muted)"></p></div></div>
+    <div class="row"><button id="as-cancel" class="btn ghosty" style="flex:1">Cancel</button><button id="as-ok" class="btn gold" style="flex:1">Assign</button></div>
+  </div>
+</div>
+
+<!-- game over -->
+<div id="ov-over" class="overlay" hidden>
+  <div class="dialog wide" role="dialog" aria-label="Game over">
+    <div class="eyebrow">Game over</div>
+    <div id="ov-title" class="big"></div>
+    <p id="ov-sub" style="margin:0;color:var(--muted)"></p>
+    <div class="replay">
+      <svg id="replay" role="img" aria-label="Replay"></svg>
+      <div class="row"><button class="icon-btn" id="rp-prev" aria-label="Previous step">‹</button><input type="range" id="rp-range" min="0" value="0" aria-label="Replay step"><button class="icon-btn" id="rp-next" aria-label="Next step">›</button></div>
+      <div id="rp-label" class="eyebrow"></div>
+    </div>
+    <div class="row"><button id="ov-home" class="btn" style="flex:1">Back to start</button><button id="ov-close" class="btn ghosty" style="flex:1">Look at the map</button></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+"use strict";
+const CFG = {
+  api: 'https://xxczlgvobtcvsvpobsff.supabase.co/functions/v1/game',
+  url: 'https://xxczlgvobtcvsvpobsff.supabase.co',
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4Y3psZ3ZvYnRjdnN2cG9ic2ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2MTA2MjIsImV4cCI6MjEwODE4NjYyMn0.5cEjDyk3RWKSsTS-Zsmrai4QrdL2R2bhkMoU-3mia6U',
+};
+const QS = new URLSearchParams(location.search);
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && QS.get('api')) CFG.api = QS.get('api');
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const NS = 'http://www.w3.org/2000/svg';
+const RES_NAMES = ['VR headset','Vintage wine','Exotic pet','Renaissance oil painting','Stasis pod','Robot butler','Great Barrier Coral terrarium'];
+const CONT_NAMES = ['Northern Americas','Southern Americas','Africa','Europe','Russia/North Asia','Southern/East Asia','Australia'];
+const resIcon = c => `<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#res-${c}"/></svg>`;
+
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem('bt:' + k)); } catch { return null; } },
+  set(k, v){ try { localStorage.setItem('bt:' + k, JSON.stringify(v)); } catch {} },
+  del(k){ try { localStorage.removeItem('bt:' + k); } catch {} },
+};
+
+const S = { code:null, token:null, view:null, fetching:false, lastFetch:0, live:false, deadline:Infinity,
+  draft:{ move:null, place:null }, placing:null, stepKey:null, autoSent:false, sending:false,
+  lastSeq:0, seenSeq:0, lastPingAt:0, cool:{}, overShown:false };
+
+/* ================= map ================= */
+let MAP = null, REG = {}, ROUTES = [], W = 2000, H = 940;
+const mapReady = fetch('data/world-map.json').then(r => r.json()).then(m => {
+  MAP = m; W = m.viewBox[2]; H = m.viewBox[3];
+  m.regions.forEach(r => REG[r.id] = r);
+  ROUTES = m.routes;
+  buildMap();
+});
+
+const svg = $('#map');
+const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+let gRegions, gSea, gMarks, gLabels, paths = {};
+function contTint(c){ return ['#3f4a52','#424a40','#4a463b','#3d4553','#46404f','#3c4a49','#4b4049'][c]; }
+function buildMap(){
+  svg.innerHTML = '';
+  gRegions = el('g', {}, svg); gSea = el('g', {}, svg); gLabels = el('g', {}, svg); gMarks = el('g', {}, svg);
+  const ci = Object.fromEntries(MAP.continents.map((c, i) => [c.id, i]));
+  MAP.regions.forEach(r => {
+    r.ci = ci[r.continent];
+    const p = el('path', { d: r.path, class: 'rg', fill: contTint(r.ci), 'data-id': r.id }, gRegions);
+    paths[r.id] = p;
+  });
+  MAP.straits.forEach(s => {
+    const [a, b] = s.line;
+    if (s.wraps){ const [L, R] = a[0] < b[0] ? [a, b] : [b, a]; el('line', { x1:L[0], y1:L[1], x2:0, y2:L[1], class:'strait' }, gSea); el('line', { x1:R[0], y1:R[1], x2:W, y2:R[1], class:'strait' }, gSea); }
+    else el('line', { x1:a[0], y1:a[1], x2:b[0], y2:b[1], class:'strait' }, gSea);
+  });
+  ROUTES.forEach(rt => { rt.el = routePaths(rt).map(d => el('path', { d, class:'route' }, gSea)); });
+  MAP.regions.forEach(r => { const t = el('text', { x:r.label[0], y:r.label[1], class:'lbl' }, gLabels); t.textContent = r.name; r.lblEl = t; });
+  resetView(); applyView();
+}
+function curve(a, b, bend){
+  const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, dx = b[0] - a[0], dy = b[1] - a[1];
+  return { d:`M${a[0]},${a[1]} Q${mx - dy * bend},${my + dx * bend} ${b[0]},${b[1]}`, c:[mx - dy * bend, my + dx * bend] };
+}
+function routePaths(rt){
+  const [a, b] = rt.ports;
+  if (!rt.wraps) return [curve(a, b, .12).d];
+  const [L, R] = a[0] < b[0] ? [a, b] : [b, a], y = (L[1] + R[1]) / 2;
+  return [curve(L, [0, y], .08).d, curve(R, [W, y], -.08).d];
+}
+// where a ship is drawn mid-voyage
+function shipPoint(rt, from, frac){
+  const [a, b] = rt.a === from ? rt.ports : [rt.ports[1], rt.ports[0]];
+  if (!rt.wraps){ const { c } = curve(rt.ports[0], rt.ports[1], .12); const t = rt.a === from ? frac : 1 - frac;
+    const p0 = rt.ports[0], p1 = rt.ports[1]; return [(1-t)*(1-t)*p0[0] + 2*(1-t)*t*c[0] + t*t*p1[0], (1-t)*(1-t)*p0[1] + 2*(1-t)*t*c[1] + t*t*p1[1]]; }
+  const edgeX = a[0] < W / 2 ? 0 : W, y = (a[1] + b[1]) / 2;
+  if (frac < .5){ const t = frac * 2; return [a[0] + (edgeX - a[0]) * t, a[1] + (y - a[1]) * t]; }
+  const edge2 = edgeX === 0 ? W : 0, t = (frac - .5) * 2; return [edge2 + (b[0] - edge2) * t, y + (b[1] - y) * t];
+}
+
+/* pan + zoom */
+let vb = { x:0, y:0, w:2000, h:940 }, base = { ...vb };
+function fitBase(){ const r = svg.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return { x:0, y:0, w:W, h:H }; const asp = r.width / Math.max(r.height, 1); let w = W, h = H; if (w / h < asp) w = h * asp; else h = w / asp; return { x:(W - w) / 2, y:(H - h) / 2, w, h }; }
+function resetView(){ base = fitBase(); vb = { ...base }; }
+function applyView(){
+  if (!MAP) return;
+  svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  const px = vb.w / Math.max(svg.getBoundingClientRect().width, 1), z = base.w / vb.w;
+  gLabels.style.display = z >= 1.8 ? '' : 'none';
+  gLabels.setAttribute('font-size', 11 * px); gLabels.setAttribute('stroke-width', 3 * px);
+  // show a name only where it fits inside its region at this zoom
+  if (z >= 1.8) MAP.regions.forEach(r => {
+    if (!r.bw){ const bb = paths[r.id].getBBox(); r.bw = bb.width; r.bh = bb.height; }
+    const fits = r.bw / px > r.name.length * 6.2 && r.bh / px > 12;
+    r.lblEl.style.display = fits ? '' : 'none';
+  });
+  S.px = px; drawMarks();
+}
+function zoomAt(f, cx, cy){ const nw = Math.min(Math.max(vb.w / f, base.w / 45), base.w * 1.05), k = nw / vb.w; vb = { x:cx - (cx - vb.x) * k, y:cy - (cy - vb.y) * k, w:nw, h:vb.h * k }; applyView(); }
+function toSvg(x, y){ const r = svg.getBoundingClientRect(); return [vb.x + (x - r.left) / r.width * vb.w, vb.y + (y - r.top) / r.height * vb.h]; }
+function focusRegions(ids){
+  const boxes = ids.filter(id => paths[id]).map(id => paths[id].getBBox());
+  if (!boxes.length) return;
+  let x0 = Math.min(...boxes.map(b => b.x)), y0 = Math.min(...boxes.map(b => b.y)), x1 = Math.max(...boxes.map(b => b.x + b.width)), y1 = Math.max(...boxes.map(b => b.y + b.height));
+  const r = svg.getBoundingClientRect(), asp = r.width / Math.max(r.height, 1);
+  let w = Math.max((x1 - x0) * 1.6, base.w / 9), h = w / asp; if (h < (y1 - y0) * 1.6){ h = (y1 - y0) * 1.6; w = h * asp; }
+  vb = { x:(x0 + x1) / 2 - w / 2, y:(y0 + y1) / 2 - h / 2, w, h }; applyView();
+}
+svg.addEventListener('wheel', e => { e.preventDefault(); const [x, y] = toSvg(e.clientX, e.clientY); zoomAt(Math.exp(-e.deltaY * .0015), x, y); }, { passive:false });
+const ptr = new Map(); let moved = 0, pinch0 = null;
+svg.addEventListener('pointerdown', e => { svg.setPointerCapture(e.pointerId); ptr.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; if (ptr.size === 2){ const [p, q] = [...ptr.values()]; pinch0 = Math.hypot(p[0]-q[0], p[1]-q[1]); } });
+svg.addEventListener('pointermove', e => {
+  if (!ptr.has(e.pointerId)) return;
+  const prev = ptr.get(e.pointerId), r = svg.getBoundingClientRect();
+  if (ptr.size === 1){ const dx = e.clientX - prev[0], dy = e.clientY - prev[1]; moved += Math.abs(dx) + Math.abs(dy); vb.x -= dx / r.width * vb.w; vb.y -= dy / r.height * vb.h; applyView(); }
+  ptr.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ptr.size === 2 && pinch0){ const [p, q] = [...ptr.values()], d = Math.hypot(p[0]-q[0], p[1]-q[1]); const [x, y] = toSvg((p[0]+q[0]) / 2, (p[1]+q[1]) / 2); zoomAt(d / pinch0, x, y); pinch0 = d; moved = 99; }
+});
+const upPtr = e => { ptr.delete(e.pointerId); if (ptr.size < 2) pinch0 = null; };
+svg.addEventListener('pointerup', e => {
+  const click = moved < 8 && ptr.size === 1; upPtr(e); if (!click) return;
+  const t = document.elementFromPoint(e.clientX, e.clientY);
+  if (t && t.dataset && t.dataset.id) onRegionTap(t.dataset.id);
+});
+svg.addEventListener('pointercancel', upPtr);
+$('#z-in').onclick = () => zoomAt(1.6, vb.x + vb.w / 2, vb.y + vb.h / 2);
+$('#z-out').onclick = () => zoomAt(1 / 1.6, vb.x + vb.w / 2, vb.y + vb.h / 2);
+$('#z-all').onclick = () => { resetView(); applyView(); };
+$('#z-me').onclick = () => focusMe();
+new ResizeObserver(() => { if (!MAP) return; const z = base.w / vb.w; base = fitBase(); if (z <= 1.01) vb = { ...base }; applyView(); }).observe(svg);
+
+/* ================= networking ================= */
+async function api(action, body = {}){
+  let res;
+  try { res = await fetch(CFG.api, { method:'POST', headers:{ 'Content-Type':'application/json', apikey:CFG.key, Authorization:'Bearer ' + CFG.key }, body:JSON.stringify({ action, ...body }) }); }
+  catch { return { ok:false, error:"Can't reach the game server. Check your connection and try again.", net:true }; }
+  let json = {}; try { json = await res.json(); } catch {}
+  json.status = res.status;
+  if (!res.ok && !json.error) json.error = 'The server returned an error. Try again.';
+  return json;
+}
+let toastT = null;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3400); }
+function show(id){ ['home','lobby','game'].forEach(s => $('#' + s).hidden = s !== id); if (id === 'game' && MAP) requestAnimationFrame(() => { base = fitBase(); applyView(); }); }
+function saveSession(){ store.set('session', { code:S.code, token:S.token }); }
+function clearSession(){ store.del('session'); S.code = S.token = null; S.view = null; S.overShown = false; unsubscribe(); }
+function goHome(msg){ show('home'); $('#home-err').textContent = msg || ''; }
+
+async function refresh(){
+  if (!S.code || S.fetching) return;
+  S.fetching = true;
+  const r = await api('view', { code:S.code, token:S.token });
+  S.fetching = false; S.lastFetch = Date.now();
+  if (r.view && r.view.me == null){ clearSession(); goHome('You are no longer in that room.'); return; }
+  if (!r.ok){ if (r.status === 404){ clearSession(); goHome(r.error); } return; }
+  apply(r.view);
+}
+let rt = null, chan = null;
+function subscribe(code){
+  if (!window.supabase || !window.supabase.createClient) return;
+  try {
+    rt = rt || window.supabase.createClient(CFG.url, CFG.key, { auth:{ persistSession:false } });
+    if (chan) rt.removeChannel(chan);
+    const ping = p => { const ver = p && (p.version ?? (p.new && p.new.version)); if (!S.view || ver == null || ver > S.view.version) refresh(); };
+    chan = rt.channel('room-' + code)
+      .on('broadcast', { event:'update' }, m => ping(m.payload))
+      .on('postgres_changes', { event:'*', schema:'public', table:'game_signals', filter:'code=eq.' + code }, ping)
+      .subscribe(st => { S.live = st === 'SUBSCRIBED'; });
+  } catch { S.live = false; }
+}
+function unsubscribe(){ try { if (chan && rt) rt.removeChannel(chan); } catch {} chan = null; S.live = false; }
+setInterval(() => {
+  if (!S.code || document.hidden) return;
+  const every = S.live ? 5000 : 2000;
+  const expired = S.view && S.view.status === 'playing' && isFinite(S.deadline) && Date.now() > S.deadline + 1500;
+  if (Date.now() - S.lastFetch > (expired ? 1500 : every)) refresh();
+}, 500);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+
+/* ================= home + lobby ================= */
+$('#in-name').value = store.get('name') || '';
+const preCode = (QS.get('room') || location.hash.replace('#', '')).toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+if (preCode) $('#in-code').value = preCode;
+function getName(){ const n = $('#in-name').value.trim(); if (!n){ $('#home-err').textContent = 'Enter a name first.'; $('#in-name').focus(); return null; } store.set('name', n); return n; }
+$('#btn-host').onclick = async () => {
+  const name = getName(); if (!name) return;
+  const r = await api('create', { name }); if (!r.ok){ $('#home-err').textContent = r.error; return; }
+  enterRoom(r.view.code, r.token, r.view);
+};
+$('#btn-join').onclick = async () => {
+  const name = getName(); if (!name) return;
+  const code = $('#in-code').value.toUpperCase().replace(/[^A-Z]/g, '');
+  if (code.length !== 4){ $('#home-err').textContent = 'Room codes are 4 letters.'; return; }
+  const r = await api('join', { code, name }); if (!r.ok){ $('#home-err').textContent = r.error; return; }
+  enterRoom(code, r.token, r.view);
+};
+$('#in-code').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btn-join').click(); });
+function enterRoom(code, token, view){ S.code = code; S.token = token; saveSession(); subscribe(code); apply(view); }
+
+function renderLobby(){
+  const v = S.view, meL = v.lobby.find(p => p.id === v.me);
+  $('#lb-code').textContent = v.code;
+  $('#lb-count').textContent = `${v.lobby.length} of 7`;
+  const COLORS = ['#ef5a5a','#4d9bf0','#4cc38a','#f2b33d','#a77cf0','#3fd0d4','#f07cc0'];
+  $('#lb-players').innerHTML = v.lobby.map((p, i) => `<li><span class="dot" style="background:${COLORS[i]}"></span><span>${esc(p.name)}${p.id === v.me ? ' <span style="color:var(--muted)">(you)</span>' : ''}${p.id === v.host ? ' <span class="eyebrow" style="margin-left:6px">host</span>' : ''}</span><span class="tag ${p.ready ? 'ok' : ''}">${p.ready ? 'Ready' : 'Not ready'}</span></li>`).join('');
+  if (document.activeElement !== $('#lb-name')) $('#lb-name').value = meL ? meL.name : '';
+  $('#lb-name').disabled = $('#btn-rename').disabled = !!(meL && meL.ready);
+  const isHost = v.me === v.host;
+  $('#lb-timer').value = String(v.timer); $('#lb-timer').disabled = !isHost;
+  $('#btn-ready').textContent = meL && meL.ready ? 'Not ready' : 'Ready';
+  $('#btn-start').hidden = !isHost;
+  $('#btn-start').disabled = !(v.lobby.length >= 2 && v.lobby.every(p => p.ready));
+}
+$('#btn-invite').onclick = async () => {
+  const link = location.origin + location.pathname + '?room=' + S.code;
+  try { await navigator.clipboard.writeText(link); toast('Invite link copied.'); } catch { toast(link); }
+};
+const lobbyCall = async (action, body) => { const r = await api(action, { code:S.code, token:S.token, ...body }); if (!r.ok){ $('#lb-err').textContent = r.error; return; } $('#lb-err').textContent = ''; apply(r.view); };
+$('#btn-rename').onclick = () => lobbyCall('name', { name:$('#lb-name').value });
+$('#lb-timer').onchange = () => lobbyCall('timer', { timer:Number($('#lb-timer').value) });
+$('#btn-ready').onclick = () => { const meL = S.view.lobby.find(p => p.id === S.view.me); lobbyCall('ready', { ready:!(meL && meL.ready) }); };
+$('#btn-start').onclick = () => lobbyCall('start');
+$('#btn-leave').onclick = async () => { await api('leave', { code:S.code, token:S.token }); clearSession(); goHome(''); };
+
+/* ================= applying a view ================= */
+function apply(v){
+  if (S.view && v.code === S.view.code && v.version < S.view.version) return;
+  const prev = S.view; S.view = v;
+  if (v.status === 'lobby'){ renderLobby(); show('lobby'); return; }
+  const key = v.turn + '.' + v.step;
+  if (key !== S.stepKey){
+    const first = S.stepKey == null; S.stepKey = key;
+    S.draft = { move:null, place:null }; S.placing = null; S.autoSent = false;
+    if (first) S.focusPending = true;
+    if (!first) afterStep(prev, v);
+    else S.seenSeq = Math.max(S.seenSeq, ...(v.report || []).map(r => r.seq), 0);
+    S.lastSeq = Math.max(S.lastSeq, ...(v.report || []).map(r => r.seq), 0);
+    if (v.myAction){ S.draft.move = v.myAction.move; S.draft.place = v.myAction.place; }
+  }
+  S.deadline = v.msLeft != null ? Date.now() + v.msLeft : Infinity;
+  handlePings(v);
+  if (v.status === 'over'){ renderGame(); show('game'); showOver(); return; }
+  renderGame(); show('game');
+  if (S.focusPending && MAP){ S.focusPending = false; requestAnimationFrame(() => requestAnimationFrame(() => { base = fitBase(); focusMe(); })); }
+}
+
+// sounds and focus after each step resolves
+function afterStep(prev, v){
+  const fresh = (v.report || []).filter(r => r.seq > S.lastSeq);
+  const kinds = new Set(fresh.map(r => r.kind));
+  if (kinds.has('trapped') || kinds.has('trapfired')) Sound.snap();
+  if (kinds.has('sighting') || kinds.has('spotted') || kinds.has('voice') || kinds.has('together')) setTimeout(Sound.sonar, kinds.has('trapped') ? 500 : 0);
+  if (fresh.some(r => r.kind === 'collect' && r.who === v.pid)) Sound.chime();
+  const meP = v.players[v.pid];
+  if (meP && prev && prev.players[v.pid] && prev.players[v.pid].pos !== meP.pos && meP.pos) focusMe(true);
+  const imp = fresh.filter(r => ['trapped','sighting','spotted','voice','bunker','together','collect','arrive','ready'].includes(r.kind) && (r.kind !== 'collect' || r.who === v.pid));
+  if (imp.length) toast(imp[imp.length - 1].text);
+}
+
+/* ================= game rendering ================= */
+const meV = () => S.view && S.view.players[S.view.pid];
+const isExpected = () => S.view && S.view.status === 'playing' && S.view.expected.includes(S.view.pid);
+const isSubmitted = () => S.view && S.view.submitted.includes(S.view.pid);
+
+function legal(){
+  const me = meV(); if (!me || me.sea || !MAP) return { regions:[], routes:[] };
+  const regions = REG[me.pos].neighbors;
+  const routes = ROUTES.filter(rt => rt.a === me.pos || rt.b === me.pos).map(rt => ({ rt, dest: rt.a === me.pos ? rt.b : rt.a }));
+  return { regions, routes };
+}
+
+function renderGame(){
+  const v = S.view, me = meV(); if (!me) return;
+  $('#tb-dot').style.background = me.color; $('#tb-name').textContent = me.name;
+  const narrow = innerWidth < 820;
+  $('#tb-turn').textContent = v.status === 'over' ? `Game over · turn ${v.turn}` : narrow ? `T${v.turn} · step ${v.step}/2` : `Turn ${v.turn} · step ${v.step} of 2`;
+  renderRivals(); renderRail(); drawMarks(); renderHint(); updateTimer();
+  const unseen = (v.report || []).filter(r => r.seq > S.seenSeq).length;
+  $('#rep-badge').hidden = !unseen; $('#rep-badge').textContent = unseen;
+}
+
+// only touch the DOM when content changed, so taps and drags in progress survive refreshes
+function setHTML(sel, html){ const e = $(sel); if (e._html !== html){ e._html = html; e.innerHTML = html; return true; } return false; }
+function renderRivals(){
+  const v = S.view;
+  setHTML('#rivals', v.players.filter(p => p.id !== v.pid).map(p => {
+    const s = p.slots || {};
+    const slot = (kind, n) => s[kind] != null
+      ? `<div class="slot filled" title="${kind}"><img src="sprites/${kind}-${s[kind]}.png" alt="${kind}"></div>`
+      : `<div class="slot" title="${kind}: unknown"><span class="lab">${kind.slice(0, 4)}</span></div>`;
+    const lab = p.home && REG[p.home] ? REG[p.home].name : p.homeCont != null ? CONT_NAMES[p.homeCont] : '?';
+    const seen = p.seen ? `${REG[p.seen.region]?.name || p.seen.region}, ${ago(p.seen.turn)}` : '?';
+    const heard = p.heard ? `${CONT_NAMES[p.heard.cont]}, ${ago(p.heard.turn)}` : '?';
+    return `<div class="rival" data-rival="${p.id}">
+      <div class="nm"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}<span style="margin-left:auto;font-family:var(--f-mono);font-size:12px;color:var(--muted)">${p.have.length}/7</span></div>
+      <div class="slots">${slot('passport')}${slot('face')}${slot('voice')}</div>
+      <div class="pips">${[0,1,2,3,4,5,6].map(c => `<span class="pip ${p.have.includes(c) ? 'on' : ''}" title="${RES_NAMES[c]}${p.have.includes(c) ? ' (collected)' : ''}">${resIcon(c)}</span>`).join('')}</div>
+      <div class="intel"><b>Lab</b><span>${esc(lab)}</span><b>Seen</b><span>${esc(seen)}</span><b>Heard</b><span>${esc(heard)}</span></div>
+    </div>`;
+  }).join(''));
+}
+const ago = t => { const d = S.view.turn - t; return d <= 0 ? 'this turn' : d === 1 ? '1 turn ago' : `${d} turns ago`; };
+
+function renderRail(){
+  const v = S.view, me = meV();
+  $('#my-res').innerHTML = [0,1,2,3,4,5,6].map(c => {
+    const got = v.have.includes(c), r = v.resources[c];
+    return `<span class="pip ${got ? 'on' : ''}" title="${RES_NAMES[c]}: ${got ? 'collected' : 'in ' + (REG[r]?.name || r)}">${resIcon(c)}</span>`;
+  }).join('');
+  // identifiers
+  const changed = setHTML('#tray', (v.held || []).length ? v.held.map(h => `<button class="tok" data-ident="${h.id}" aria-label="${h.kind} identifier"><img src="sprites/${h.kind}-${h.sprite}.png" alt=""></button>`).join('')
+    : '<span class="empty">No identifiers yet. Green regions next to you hold something.</span>');
+  if (changed) $('#tray').querySelectorAll('.tok').forEach(bindToken);
+  paintCooldowns();
+  // items
+  const canPlace = v.status === 'playing' && v.step === 1 && isExpected() && !isSubmitted();
+  $('#it-op-n').textContent = v.ops; $('#it-trap-n').textContent = v.traps;
+  $('#it-op').disabled = !canPlace || (v.ops < 1 && !(S.draft.place && S.draft.place.kind === 'op'));
+  $('#it-trap').disabled = !canPlace || (v.traps < 1 && !(S.draft.place && S.draft.place.kind === 'trap'));
+  $('#it-op').classList.toggle('on', S.placing === 'op' || (S.draft.place && S.draft.place.kind === 'op'));
+  $('#it-trap').classList.toggle('on', S.placing === 'trap' || (S.draft.place && S.draft.place.kind === 'trap'));
+  // actions
+  const exp = isExpected(), sub = isSubmitted();
+  $('#btn-end').hidden = !(v.canEnd && exp && !sub);
+  $('#btn-done').hidden = !exp || sub || v.status !== 'playing';
+  $('#btn-change').hidden = !(exp && sub);
+  $('#btn-done').disabled = !(me.sea || S.draft.move) || S.sending;
+  $('#status').innerHTML = statusText();
+}
+function statusText(){
+  const v = S.view, me = meV();
+  if (v.status === 'over') return 'The game is over.';
+  if (!isExpected()){
+    if (me.sea) return `<b>At sea</b> on the way to ${esc(REG[me.sea.dest].name)}. Arrival: turn ${me.sea.arrive}.`;
+    return 'Nothing to do this step. Waiting for the others.';
+  }
+  if (isSubmitted()){
+    const waiting = v.expected.filter(id => !v.submitted.includes(id)).map(id => esc(v.players[id].name));
+    return waiting.length ? `Locked in. Waiting for <b>${waiting.join(', ')}</b>.` : 'Locked in.';
+  }
+  if (v.canEnd) return '<b>You made it.</b> End the world, or keep moving.';
+  if (me.sea) return `<b>At sea</b> to ${esc(REG[me.sea.dest].name)}. You can still place an item, then tap Done.`;
+  const mv = S.draft.move;
+  if (S.placing) return `Tap any region to place your ${S.placing === 'op' ? 'operative' : 'trap'}.`;
+  if (!mv) return v.step === 1 ? 'Step 1: place an item if you like, then pick a green region to move to.' : 'Step 2: pick a green region to move to.';
+  if (mv.startsWith('route:')){ const rt = ROUTES.find(r => r.id === mv.slice(6)); const dest = rt.a === me.pos ? rt.b : rt.a;
+    return `Ship to <b>${esc(REG[dest].name)}</b>: ${rt.turns} turn${rt.turns > 1 ? 's' : ''} at sea. Tap Done.`; }
+  return `Moving to <b>${esc(REG[mv].name)}</b>. Tap Done to lock it in.`;
+}
+function renderHint(){
+  const v = S.view, me = meV(), h = $('#maphint'); if (!me) return;
+  const pills = [];
+  if (v.status === 'playing' && isExpected() && !isSubmitted() && S.draft.place)
+    pills.push(`<div class="pill">${S.draft.place.kind === 'op' ? 'Operative' : 'Trap'} goes to <b>${esc(REG[S.draft.place.region].name)}</b></div>`);
+  const fresh = (v.report || []).filter(r => r.turn === v.turn - (v.step === 1 ? 1 : 0) && (v.step === 1 ? r.step === 2 : r.step === 1) && ['trapped','sighting','voice','bunker','together'].includes(r.kind)).slice(-2);
+  fresh.forEach(r => pills.push(`<div class="pill">${esc(r.text)}</div>`));
+  h.innerHTML = pills.join('');
+}
+
+function drawMarks(){
+  if (!MAP || !S.view || !S.view.players) return;
+  const v = S.view, me = meV(), over = v.status === 'over';
+  gMarks.innerHTML = '';
+  Object.values(paths).forEach(p => p.setAttribute('class', 'rg'));
+  ROUTES.forEach(rt => rt.el.forEach(e => e.setAttribute('class', 'route')));
+  if (!me) return;
+  const px = S.px || 1, add = (id, c) => paths[id] && paths[id].classList.add(c);
+  // operatives
+  (v.myOperatives || []).forEach(r => { (REG[r].neighbors || []).forEach(n => add(n, 'vision')); add(r, 'oprg'); });
+  // red pulse: where I located someone in the step that just resolved
+  const lastStep = v.step === 1 ? { t:v.turn - 1, s:2 } : { t:v.turn, s:1 };
+  (v.report || []).filter(r => r.turn === lastStep.t && r.step === lastStep.s && (r.kind === 'sighting' || r.kind === 'together')).forEach(r => {
+    if (r.op){ add(r.op, 'pulse'); REG[r.op].neighbors.forEach(n => add(n, 'pulse')); } else add(r.region, 'pulse');
+  });
+  // hints, legal moves
+  (v.hints || []).forEach(r => add(r, 'hint'));
+  const act = !over && isExpected() && !isSubmitted() && !me.sea;
+  if (act && !S.placing){
+    const L = legal();
+    L.regions.forEach(r => add(r, 'legal'));
+    L.routes.forEach(({ rt, dest }) => { add(dest, 'legal'); rt.el.forEach(e => e.setAttribute('class', 'route mine')); });
+  }
+  if (me.pos) add(me.pos, 'cur');
+  if (me.home) add(me.home, 'home');
+  const mv = S.draft.move;
+  if (mv && !mv.startsWith('route:')) add(mv, 'target');
+  if (mv && mv.startsWith('route:')){ const rt = ROUTES.find(r => r.id === mv.slice(6)); add(rt.a === me.pos ? rt.b : rt.a, 'target'); }
+  const r0 = 7 * px;
+  const icon = (href, x, y, s, extra = '') => el('image', { href, x:x - s / 2, y:y - s / 2, width:s, height:s, ...extra }, gMarks);
+  const star = (x, y, s, color) => { const u = el('use', { href:'#ico-star', x:x - s / 2, y:y - s / 2, width:s, height:s, fill:color }, gMarks); return u; };
+  // my home bunker
+  if (me.home){ const L = REG[me.home].label; star(L[0], L[1] - 12 * px, 16 * px, '#e0b23a'); }
+  // known rival bunkers
+  v.players.forEach(p => { if (p.id !== v.pid && p.home && REG[p.home]){ const L = REG[p.home].label; star(L[0], L[1] - 12 * px, 14 * px, p.color); } });
+  // my uncollected resources
+  Object.entries(v.resources || {}).forEach(([c, r]) => {
+    if (v.have.includes(+c)) return; const L = REG[r].label, s = 18 * px;
+    el('circle', { cx:L[0], cy:L[1], r:s * .62, fill:'#131518', stroke:'#e0b23a', 'stroke-width':1.2 * px }, gMarks);
+    el('use', { href:'#res-' + c, x:L[0] - s / 2, y:L[1] - s / 2, width:s, height:s }, gMarks);
+  });
+  // my traps
+  (v.myTraps || []).forEach(r => { const L = REG[r].label; icon('sprites/trap.png', L[0] + 10 * px, L[1] + 10 * px, 16 * px); });
+  (v.myOperatives || []).forEach(r => { const L = REG[r].label; icon('sprites/operative.png', L[0] - 10 * px, L[1] + 10 * px, 16 * px); });
+  // draft placement
+  if (S.draft.place){ const L = REG[S.draft.place.region].label; icon(`sprites/${S.draft.place.kind === 'op' ? 'operative' : 'trap'}.png`, L[0], L[1] + 14 * px, 22 * px, { opacity:.6 }); }
+  // rivals I've seen (face assigned)
+  v.players.forEach(p => {
+    if (p.id === v.pid) return;
+    if (over && (p.pos || p.sea)) return;   // drawn below
+    if (p.seen && REG[p.seen.region]){ const L = REG[p.seen.region].label;
+      el('circle', { cx:L[0], cy:L[1], r:r0, fill:'none', stroke:p.color, 'stroke-width':2 * px, 'stroke-dasharray':`${3 * px} ${2 * px}` }, gMarks);
+      const t = el('text', { x:L[0], y:L[1] - r0 - 4 * px, 'font-size':10 * px, fill:p.color, 'text-anchor':'middle', 'font-family':'IBM Plex Mono, monospace' }, gMarks); t.textContent = `${p.name} · ${ago(p.seen.turn)}`; }
+  });
+  // players (me always; everyone at game over)
+  v.players.forEach(p => {
+    if (!(p.id === v.pid || over)) return;
+    let x, y;
+    if (p.sea){ const rt = ROUTES.find(r => r.id === p.sea.route); const total = rt.turns, left = Math.max(0, p.sea.arrive - v.turn);
+      [x, y] = shipPoint(rt, p.sea.from, Math.min(.92, Math.max(.08, 1 - left / (total + 1))));
+      el('use', { href:'#ico-ship', x:x - 9 * px, y:y - 9 * px, width:18 * px, height:18 * px, fill:p.color }, gMarks); return; }
+    if (!p.pos || !REG[p.pos]) return;
+    [x, y] = REG[p.pos].label;
+    if (p.id === v.pid){ const ring = el('circle', { cx:x, cy:y, r:r0 * 1.9, fill:'none', stroke:p.color, 'stroke-width':1.5 * px, opacity:.7 }, gMarks);
+      el('animate', { attributeName:'r', values:`${r0 * 1.2};${r0 * 2.4};${r0 * 1.2}`, dur:'2.2s', repeatCount:'indefinite' }, ring); }
+    el('circle', { cx:x, cy:y, r:r0, fill:p.color, stroke:'#131518', 'stroke-width':2 * px }, gMarks);
+    const t = el('text', { x, y:y + .5 * px, 'font-size':9 * px, fill:'#131518', 'text-anchor':'middle', 'dominant-baseline':'middle', 'font-weight':'700', 'font-family':'IBM Plex Sans, sans-serif' }, gMarks); t.textContent = p.name[0].toUpperCase();
+  });
+  // planned move arrow
+  if (mv && me.pos){
+    const to = mv.startsWith('route:') ? (() => { const rt = ROUTES.find(r => r.id === mv.slice(6)); return rt.a === me.pos ? rt.b : rt.a; })() : mv;
+    const a = REG[me.pos].label, b = REG[to].label;
+    if (!mv.startsWith('route:') || Math.abs(a[0] - b[0]) < W / 2){
+      el('line', { x1:a[0], y1:a[1], x2:b[0], y2:b[1], stroke:'#ffffff', 'stroke-width':1.6 * px, 'stroke-dasharray':`${4 * px} ${3 * px}`, opacity:.8 }, gMarks);
+      el('circle', { cx:b[0], cy:b[1], r:r0, fill:'none', stroke:me.color, 'stroke-width':2 * px, 'stroke-dasharray':`${3 * px} ${2 * px}` }, gMarks); }
+  }
+}
+
+function focusMe(soft){
+  const me = meV(); if (!me || !MAP) return;
+  if (me.sea){ resetView(); applyView(); return; }
+  const ids = [me.pos, ...REG[me.pos].neighbors];
+  if (soft && base.w / vb.w > 2){
+    const b = paths[me.pos].getBBox(), cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    if (cx > vb.x + vb.w * .2 && cx < vb.x + vb.w * .8 && cy > vb.y + vb.h * .2 && cy < vb.y + vb.h * .8) return;
+  }
+  focusRegions(ids);
+}
+
+/* ================= tapping the map ================= */
+function onRegionTap(id){
+  const v = S.view; if (!v || v.status !== 'playing'){ if (v) toast(REG[id].name); return; }
+  if (!isExpected() || isSubmitted()){ toast(`${REG[id].name}${isSubmitted() ? ' · tap Change my move first' : ''}`); return; }
+  const me = meV();
+  if (S.placing){
+    if (S.placing === 'trap' && (v.myTraps || []).includes(id)){ toast('You already have a trap there.'); return; }
+    S.draft.place = { kind:S.placing, region:id }; S.placing = null; renderGame(); return;
+  }
+  if (me.sea){ toast('You are at sea until your ship arrives.'); return; }
+  const L = legal();
+  if (L.regions.includes(id)){ S.draft.move = id; renderGame(); return; }
+  const r = L.routes.find(x => x.dest === id);
+  if (r){ S.draft.move = 'route:' + r.rt.id; renderGame(); return; }
+  if (id === me.pos) toast('You have to move every step.');
+  else toast(`${REG[id].name} isn't next to you. Pick a green region.`);
+}
+function toggleItem(kind){
+  const v = S.view;
+  if (S.draft.place && S.draft.place.kind === kind){ S.draft.place = null; S.placing = null; renderGame(); return; }
+  if (S.placing === kind){ S.placing = null; renderGame(); return; }
+  if ((kind === 'op' ? v.ops : v.traps) < 1) return;
+  S.draft.place = null; S.placing = kind; renderGame();
+}
+$('#it-op').onclick = () => toggleItem('op');
+$('#it-trap').onclick = () => toggleItem('trap');
+
+async function submit(extra = {}){
+  const v = S.view; if (S.sending) return;
+  S.sending = true; renderRail();
+  const r = await api('submit', { code:S.code, token:S.token, turn:v.turn, step:v.step, move:S.draft.move, place:S.draft.place, ...extra });
+  S.sending = false;
+  if (r.view) apply(r.view);
+  if (!r.ok) toast(r.error); else renderGame();
+}
+$('#btn-done').onclick = () => submit();
+$('#btn-end').onclick = () => { Sound.rumble(); submit({ end:true, move:null }); };
+$('#btn-change').onclick = async () => { const v = S.view; const r = await api('unsubmit', { code:S.code, token:S.token, turn:v.turn, step:v.step }); if (r.view) apply(r.view); if (!r.ok) toast(r.error); };
+
+/* timer: send picks when time runs out */
+function updateTimer(){
+  const t = $('#tb-timer'), v = S.view;
+  if (!v || v.status !== 'playing' || !isFinite(S.deadline)){ t.textContent = v && v.status === 'playing' && v.timer === 0 ? '∞' : '—'; t.title = 'No timer'; t.classList.remove('low'); return; }
+  const s = Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000));
+  t.textContent = s + 's'; t.classList.toggle('low', s <= 5);
+  if (s === 0 && !S.autoSent && isExpected() && !isSubmitted() && (S.draft.move || meV().sea)){ S.autoSent = true; submit(); }
+}
+setInterval(updateTimer, 250);
+
+/* ================= identifiers: tap to ping, drag to assign ================= */
+function bindToken(b){
+  let start = null, ghost = null, over = null;
+  b.addEventListener('pointerdown', e => { start = [e.clientX, e.clientY]; b.setPointerCapture(e.pointerId); });
+  b.addEventListener('pointermove', e => {
+    if (!start) return;
+    if (!ghost && Math.hypot(e.clientX - start[0], e.clientY - start[1]) > 8){
+      ghost = b.cloneNode(true); Object.assign(ghost.style, { position:'fixed', zIndex:60, pointerEvents:'none', opacity:.9, width:'56px', height:'56px' }); document.body.appendChild(ghost);
+    }
+    if (ghost){
+      ghost.style.left = e.clientX - 28 + 'px'; ghost.style.top = e.clientY - 28 + 'px';
+      const t = document.elementFromPoint(e.clientX, e.clientY), card = t && t.closest && t.closest('.rival');
+      if (over && over !== card) over.classList.remove('drop');
+      over = card; if (card) card.classList.add('drop');
+    }
+  });
+  const end = e => {
+    if (!start) return;
+    const wasDrag = !!ghost;
+    if (ghost){ ghost.remove(); ghost = null; }
+    if (over){ over.classList.remove('drop'); confirmAssign(b.dataset.ident, Number(over.dataset.rival)); over = null; }
+    else if (!wasDrag) pingIdent(b.dataset.ident);
+    start = null;
+  };
+  b.addEventListener('pointerup', end);
+  b.addEventListener('pointercancel', () => { if (ghost) ghost.remove(); ghost = null; if (over) over.classList.remove('drop'); over = null; start = null; });
+  b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pingIdent(b.dataset.ident); } });
+}
+async function pingIdent(id){
+  const until = S.cool[id] || 0;
+  if (Date.now() < until){ toast('Wait a moment before tapping it again.'); return; }
+  S.cool[id] = Date.now() + 5000; paintCooldowns();
+  const r = await api('ping', { code:S.code, token:S.token, ident:id });
+  if (!r.ok && r.status !== 429) toast(r.error);
+}
+function paintCooldowns(){
+  document.querySelectorAll('.tok').forEach(b => {
+    const left = Math.ceil(((S.cool[b.dataset.ident] || 0) - Date.now()) / 1000);
+    let c = b.querySelector('.cool');
+    if (left > 0){ if (!c){ c = document.createElement('span'); c.className = 'cool'; b.appendChild(c); } c.textContent = left; }
+    else if (c) c.remove();
+  });
+}
+setInterval(paintCooldowns, 300);
+let pendingAssign = null;
+function confirmAssign(identId, rivalId){
+  const h = (S.view.held || []).find(x => x.id === identId), p = S.view.players[rivalId]; if (!h || !p) return;
+  if (p.slots && p.slots[h.kind] != null){ toast(`You already know ${p.name}'s ${h.kind}.`); return; }
+  pendingAssign = { identId, rivalId };
+  $('#as-img').src = `sprites/${h.kind}-${h.sprite}.png`;
+  $('#as-title').textContent = `Assign to ${p.name}?`;
+  $('#as-text').textContent = `If this ${h.kind} isn't ${p.name}'s, you lose it for good.`;
+  $('#ov-assign').hidden = false; $('#as-ok').focus();
+}
+$('#as-cancel').onclick = () => { $('#ov-assign').hidden = true; pendingAssign = null; };
+$('#as-ok').onclick = async () => {
+  $('#ov-assign').hidden = true; if (!pendingAssign) return;
+  const { identId, rivalId } = pendingAssign; pendingAssign = null;
+  const r = await api('assign', { code:S.code, token:S.token, ident:identId, target:rivalId });
+  if (!r.ok){ toast(r.error); return; }
+  if (r.correct){ Sound.chime(); toast(`Match! It belongs to ${S.view.players[rivalId].name}.`); } else { Sound.buzz(); toast('Wrong person. That identifier is gone.'); }
+  apply(r.view);
+};
+
+// sounds other players trigger on my phone
+function handlePings(v){
+  const last = store.get('ping:' + S.code) || 0;
+  const fresh = (v.pings || []).filter(p => p.at > last && Date.now() - p.at < 20000);
+  if (fresh.length){ const p = fresh[fresh.length - 1]; ({ passport:Sound.rustle, face:Sound.alert, voice:Sound.cough }[p.kind] || (() => {}))(); }
+  const max = Math.max(last, ...(v.pings || []).map(p => p.at));
+  if (max > last) store.set('ping:' + S.code, max);
+}
+
+/* ================= report ================= */
+const TAG = { sighting:'Sight', spotted:'Seen', voice:'Voice', together:'Close', trapped:'Trap', trapfired:'Trap', collect:'Loot', pickup:'Pickup', placed:'Placed', board:'Ship', arrive:'Ship', assign:'Intel', bunker:'Bunker', timeout:'Time', ready:'Ready', win:'End', draw:'End' };
+const HOTK = new Set(['sighting','spotted','voice','together','trapped','bunker']);
+$('#btn-report').onclick = () => {
+  const v = S.view, list = (v.report || []).slice().reverse();
+  let html = '', last = '';
+  list.forEach(r => {
+    const g = `Turn ${r.turn} · step ${r.step}`;
+    if (g !== last){ html += `<li class="grp">${g}</li>`; last = g; }
+    html += `<li class="e ${HOTK.has(r.kind) ? 'hot' : ''} ${r.public ? 'pub' : ''}"><span class="tg">${TAG[r.kind] || r.kind}</span><span>${esc(r.text)}</span></li>`;
+  });
+  $('#rep-list').innerHTML = html || '<li class="e"><span>Nothing yet.</span></li>';
+  S.seenSeq = Math.max(S.seenSeq, ...(v.report || []).map(r => r.seq), 0);
+  $('#rep-badge').hidden = true; $('#ov-report').hidden = false;
+};
+$('#rep-close').onclick = () => { $('#ov-report').hidden = true; };
+
+/* ================= game over + replay ================= */
+function showOver(){
+  if (S.overShown) return; S.overShown = true;
+  const v = S.view;
+  $('#ov-title').textContent = v.draw ? 'A draw' : v.winner === v.pid ? 'You ended the world' : `${v.players[v.winner].name} ended the world`;
+  $('#ov-sub').textContent = v.draw ? 'Two billionaires pressed the button at the same moment.' : `Humanity is gone. ${v.winner === v.pid ? 'You live' : 'They live'} on in luxury, underground.`;
+  if (!v.draw && v.winner !== v.pid) Sound.rumble(); else if (v.winner === v.pid) Sound.chime();
+  const hist = v.history || [];
+  const rg = $('#rp-range'); rg.max = Math.max(0, hist.length - 1); rg.value = rg.max;
+  drawReplay(); $('#ov-over').hidden = false;
+}
+function drawReplay(){
+  const v = S.view, hist = v.history || [], i = Number($('#rp-range').value), h = hist[i]; if (!h || !MAP) return;
+  const rs = $('#replay'); rs.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let out = MAP.regions.map(r => `<path d="${r.path}" fill="${contTint(r.ci)}" stroke="#14181b" stroke-width=".8"/>`).join('');
+  (v.trapLog || []).filter(t => t.turn <= h.t).forEach(t => { const L = REG[t.region].label; out += `<image href="sprites/trap.png" x="${L[0] - 7}" y="${L[1] - 7}" width="14" height="14" opacity=".8"/>`; });
+  (v.allOperatives || []).filter(o => o.turn <= h.t).forEach(o => { const L = REG[o.region].label; out += `<circle cx="${L[0]}" cy="${L[1]}" r="14" fill="${v.players[o.owner].color}" opacity=".18"/>`; });
+  v.players.forEach((p, k) => {
+    const trail = hist.slice(0, i + 1).map(s => s.p[k][0]).filter(Boolean).map(r => REG[r].label);
+    if (trail.length > 1){ let d = `M${trail[0][0]},${trail[0][1]}`; for (let j = 1; j < trail.length; j++) d += (Math.abs(trail[j][0] - trail[j-1][0]) > W / 2 ? 'M' : 'L') + trail[j][0] + ',' + trail[j][1]; out += `<path d="${d}" fill="none" stroke="${p.color}" stroke-width="2" opacity=".55"/>`; }
+    const [pos, route] = h.p[k];
+    if (pos){ const L = REG[pos].label; out += `<circle cx="${L[0]}" cy="${L[1]}" r="10" fill="${p.color}" stroke="#131518" stroke-width="3"/>`; }
+    else if (route){ const rt = ROUTES.find(r => r.id === route); const m = rt.ports[0]; out += `<use href="#ico-ship" x="${m[0] - 12}" y="${m[1] - 12}" width="24" height="24" fill="${p.color}"/>`; }
+    const home = REG[p.home].label; out += `<use href="#ico-star" x="${home[0] - 10}" y="${home[1] - 26}" width="20" height="20" fill="${p.color}"/>`;
+  });
+  rs.innerHTML = out;
+  $('#rp-label').textContent = `Turn ${h.t} · step ${h.s} · ` + v.players.map((p, k) => `${p.name} ${h.p[k][2]}/7`).join(' · ');
+}
+$('#rp-range').oninput = drawReplay;
+$('#rp-prev').onclick = () => { $('#rp-range').value = Math.max(0, +$('#rp-range').value - 1); drawReplay(); };
+$('#rp-next').onclick = () => { $('#rp-range').value = Math.min(+$('#rp-range').max, +$('#rp-range').value + 1); drawReplay(); };
+$('#ov-close').onclick = () => { $('#ov-over').hidden = true; };
+$('#ov-home').onclick = () => { $('#ov-over').hidden = true; clearSession(); goHome(''); };
+
+/* ================= sound (synthesized, no audio files) ================= */
+const Sound = (() => {
+  let ctx = null, on = store.get('sound') !== false;
+  const unlock = () => { try {
+    if (!ctx){ const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; ctx = new AC(); }
+    if (ctx.state === 'suspended') ctx.resume();
+    const b = ctx.createBuffer(1, 1, 22050), s = ctx.createBufferSource(); s.buffer = b; s.connect(ctx.destination); s.start(0);
+  } catch {} };
+  ['pointerdown','touchend','keydown'].forEach(ev => addEventListener(ev, unlock, { passive:true }));
+  const ready = () => on && ctx && ctx.state === 'running';
+  const noise = (dur) => { const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate), ch = b.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1; const s = ctx.createBufferSource(); s.buffer = b; return s; };
+  const tone = (type, f0, f1, at, dur, vol) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.setValueAtTime(f0, at); if (f1) o.frequency.exponentialRampToValueAtTime(f1, at + dur); g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(vol, at + .01); g.gain.exponentialRampToValueAtTime(.0008, at + dur); o.connect(g).connect(ctx.destination); o.start(at); o.stop(at + dur + .05); };
+  function sonar(){ if (!ready()) return; const t = ctx.currentTime; [[0, .45], [.55, .13], [1.05, .05]].forEach(([d, v]) => tone('sine', 1480, 1380, t + d, 1.4, v)); }
+  // passport: a few crisp bursts of filtered noise, like flicked pages
+  function rustle(){ if (!ready()) return; const t = ctx.currentTime;
+    for (let i = 0; i < 6; i++){ const at = t + i * .07 + Math.random() * .03, n = noise(.09), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      f.type = 'bandpass'; f.frequency.value = 2500 + Math.random() * 2500; f.Q.value = .9;
+      g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(.5, at + .008); g.gain.exponentialRampToValueAtTime(.001, at + .08);
+      n.connect(f).connect(g).connect(ctx.destination); n.start(at); } }
+  // face: a sharp two-tone "you've been spotted" sting (original)
+  function alert(){ if (!ready()) return; const t = ctx.currentTime;
+    tone('square', 880, null, t, .12, .16); tone('square', 1320, null, t + .11, .32, .16); tone('sine', 1760, 1700, t + .11, .35, .08); }
+  // voice: two short coughs from shaped noise
+  function cough(){ if (!ready()) return; const t = ctx.currentTime;
+    [0, .32].forEach(d => { const at = t + d, n = noise(.25), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      f.type = 'bandpass'; f.frequency.setValueAtTime(900, at); f.frequency.exponentialRampToValueAtTime(400, at + .2); f.Q.value = 1.2;
+      g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(.9, at + .015); g.gain.exponentialRampToValueAtTime(.001, at + .22);
+      n.connect(f).connect(g).connect(ctx.destination); n.start(at); tone('sawtooth', 150, 110, at, .16, .05); }); }
+  function snap(){ if (!ready()) return; const t = ctx.currentTime, n = noise(.06), g = ctx.createGain(); g.gain.setValueAtTime(.7, t); g.gain.exponentialRampToValueAtTime(.001, t + .06); n.connect(g).connect(ctx.destination); n.start(t); tone('square', 220, 90, t, .18, .12); }
+  function chime(){ if (!ready()) return; const t = ctx.currentTime; [784, 988, 1319].forEach((f, i) => tone('sine', f, null, t + i * .09, .6, .18)); }
+  function buzz(){ if (!ready()) return; tone('sawtooth', 140, 120, ctx.currentTime, .35, .12); }
+  function rumble(){ if (!ready()) return; const t = ctx.currentTime, n = noise(3), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    f.type = 'lowpass'; f.frequency.value = 180; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.9, t + .4); g.gain.exponentialRampToValueAtTime(.001, t + 3);
+    n.connect(f).connect(g).connect(ctx.destination); n.start(t); tone('sine', 55, 35, t, 3, .4); }
+  function label(){ document.querySelectorAll('.sndbtn').forEach(b => { b.textContent = on ? 'Sound on' : 'Sound off'; b.setAttribute('aria-pressed', String(on)); }); }
+  function set(v){ on = v; store.set('sound', v); label(); if (v){ unlock(); setTimeout(sonar, 60); } }
+  label();
+  return { sonar, rustle, alert, cough, snap, chime, buzz, rumble, set, get on(){ return on; } };
+})();
+document.querySelectorAll('.sndbtn').forEach(b => b.onclick = () => Sound.set(!Sound.on));
+
+/* ================= start ================= */
+(async () => {
+  await mapReady.catch(() => toast("Couldn't load the map. Reload the page."));
+  const sess = store.get('session');
+  if (sess && sess.code && sess.token){ S.code = sess.code; S.token = sess.token; subscribe(S.code); show('game'); await refresh(); if (!S.view) goHome(''); }
+  else { show('home'); if (preCode) $('#in-name').focus(); }
+})();
+</script>
+</body>
+</html>

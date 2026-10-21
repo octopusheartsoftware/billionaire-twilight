@@ -1,7 +1,10 @@
 // Supabase Edge Function: Billionaire Twilight game API.
-// Deployed together with bundle.mjs, built from engine/ by: npx esbuild engine/api.js --bundle --format=esm --minify --platform=neutral --outfile=server/bundle.mjs
+// The game logic lives in engine/, bundled to server/bundle.mjs with:
+//   npx esbuild engine/api.js --bundle --format=esm --minify --platform=neutral --outfile=server/bundle.mjs
+// The deployed function imports that bundle from GitHub pinned to an exact commit.
+// After changing engine/, rebuild the bundle, push, and redeploy with the new commit hash.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { handle } from "./bundle.mjs";
+import { handle } from "https://raw.githubusercontent.com/octopusheartsoftware/billionaire-twilight/a0b98f52cd1ae25faace5a3310b363e873f6ffe5/server/bundle.mjs";
 
 const URL = Deno.env.get("SUPABASE_URL")!;
 const KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
