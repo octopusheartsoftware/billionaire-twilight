@@ -9,14 +9,18 @@ export const COLORS = [
   { name: "Pink", hex: "#f07cc0" },
 ];
 export const MAX_PLAYERS = 7;
-export const TRAP_CHANCE = [0, 0.25, 0.45, 0.58, 0.68, 0.75, 0.80];
-export const ITEMS_PER_PLAYER = 4;      // operatives and traps each, lying on the map
+export const TRAP_CHANCE = [0, 0.25, 0.45, 0.58, 0.68, 0.75, 0.80, 0.80]; // 7 traps = same as 6
+export const ITEMS_PER_PLAYER = 5;      // operatives and traps each, lying on the map
 export const INVENTORY_CAP = 3;
 export const FACE_COUNT = 14;
 export const VOICE_COUNT = 7;
-export const TOUR_BAND = [61, 63];      // balanced dealing: best tour length in steps
+export const IDENT_COPIES = 3;          // copies of each passport, face and voice on the map
+export const RAY_POINTS = 3;            // operative spots needed for a Space Ray
+export const SEDUCE_TURNS = 2;
+export const TOUR_BAND = [61, 63];      // balanced dealing: best tour length in turns (median deal)
 export const PING_COOLDOWN_MS = 5000;
 const KINDS = ["passport", "face", "voice"];
+const CONT_NAMES = ["Northern Americas", "Southern Americas", "Africa", "Europe", "Russia/North Asia", "Southern/East Asia", "Australia"];
 
 // ------------------------------------------------------------ map helpers
 export function prepareMap(GM) {
@@ -28,7 +32,7 @@ export function prepareMap(GM) {
   });
   const byCont = GM.continents.map((_, c) => GM.regions.filter(r => r.c === c).map(r => r.id));
   const R = Object.fromEntries(GM.regions.map(r => [r.id, r]));
-  // all-pairs travel cost in steps: land step 1, ship 2*turns+1 (used for dealing only)
+  // all-pairs travel time in turns: a land move is 1, a ship route is its turns + 1 for boarding
   const n = GM.regions.length, D = [];
   for (let s = 0; s < n; s++) {
     const dist = new Array(n).fill(1e9); dist[s] = 0;
@@ -41,7 +45,7 @@ export function prepareMap(GM) {
       const r = GM.regions[u];
       for (const v of r.adj) { const j = idx[v]; if (best + 1 < dist[j]) dist[j] = best + 1; }
       for (const rt of routesAt[r.id] || []) {
-        const j = idx[rt.a === r.id ? rt.b : rt.a], w = best + 2 * rt.turns + 1;
+        const j = idx[rt.a === r.id ? rt.b : rt.a], w = best + rt.turns + 1;
         if (w < dist[j]) dist[j] = w;
       }
     }
@@ -63,8 +67,7 @@ function shuffle(arr, g) { const a = arr.slice(); for (let i = a.length - 1; i >
 function uid(g) { return Math.floor(rand(g) * 2 ** 32).toString(36) + Math.floor(rand(g) * 2 ** 32).toString(36); }
 
 // ------------------------------------------------------------ dealing
-function bestTour(M, start, targets, home) {
-  // Held-Karp over the remaining targets, ending at home
+export function bestTour(M, start, targets, home) {
   const k = targets.length; if (!k) return dist(M, start, home);
   const best = new Map();
   targets.forEach((t, i) => best.set((1 << i) * 8 + i, dist(M, start, t)));
@@ -80,7 +83,6 @@ function bestTour(M, start, targets, home) {
   for (let l = 0; l < k; l++) out = Math.min(out, best.get(full * 8 + l) + dist(M, targets[l], home));
   return out;
 }
-
 function blockedNear(M, g) {
   const bad = new Set();
   g.players.forEach(p => { if (!p.sea) { bad.add(p.pos); M.R[p.pos].adj.forEach(a => bad.add(a)); } });
@@ -96,8 +98,8 @@ function spawnItem(M, g, kind) {
 export function newGame(M, names, opts = {}) {
   const g = {
     rs: (opts.seed == null ? Math.floor(Math.random() * 4294967296) : opts.seed) >>> 0,
-    turn: 1, step: 1, stepNo: 0, players: [], items: {}, idents: [], traps: {}, operatives: [],
-    publicLog: [], history: [], pings: [], over: false, winner: null, draw: false, trapFires: 0,
+    turn: 1, players: [], items: {}, idents: [], traps: {}, trapLog: [], operatives: [],
+    publicLog: [], history: [], pings: [], trades: [], over: false, winner: null, draw: false, trapFires: 0, seq: 0,
   };
   const conts = shuffle([0, 1, 2, 3, 4, 5, 6], g).slice(0, names.length);
   const faces = shuffle([...Array(FACE_COUNT).keys()], g);
@@ -107,8 +109,8 @@ export function newGame(M, names, opts = {}) {
     return {
       id: i, name, color: COLORS[i].hex, homeCont: conts[i], home, pos: home, sea: null,
       resources: {}, have: [], seventhAt: null, canEnd: false,
-      ops: 0, traps: 0, held: [], taken: [], assigned: {}, lost: [],
-      intel: {}, bunkerKnown: {}, report: [], lastPing: {},
+      ops: 0, traps: 0, rays: 0, rayPoints: 0, seducers: 0, frozen: 0,
+      held: [], taken: [], assigned: {}, intel: {}, bunkerKnown: {}, report: [], lastPing: {},
       sprites: { passport: conts[i], face: faces[i], voice: voices[i] },
     };
   });
@@ -124,84 +126,87 @@ export function newGame(M, names, opts = {}) {
   });
   for (let i = 0; i < ITEMS_PER_PLAYER * names.length; i++) { spawnItem(M, g, "op"); spawnItem(M, g, "trap"); }
   g.players.forEach(p => KINDS.forEach(kind => {
-    g.idents.push({ id: uid(g), owner: p.id, kind, sprite: p.sprites[kind],
-      region: pick(M.ids.filter(r => !starts.has(r)), g) });
+    for (let c = 0; c < IDENT_COPIES; c++) {
+      g.idents.push({ id: uid(g), owner: p.id, kind, sprite: p.sprites[kind],
+        region: pick(M.ids.filter(r => !starts.has(r)), g) });
+    }
   }));
   g.history.push(snapshot(g));
   return g;
 }
 
 // ------------------------------------------------------------ queries
+export function canMove(p) { return !p.sea && p.frozen <= 0; }
+const hasItems = p => p.ops + p.traps + p.rays + p.seducers > 0;
 export function legalMoves(M, g, p) {
-  if (p.sea) return { regions: [], routes: [] };
+  if (!canMove(p)) return { regions: [], routes: [] };
   return { regions: M.R[p.pos].adj.slice(), routes: (M.routesAt[p.pos] || []).map(rt => rt.id) };
 }
-// players who must confirm this step
+// players who must confirm this turn: anyone who can move, and anyone who could use an item
 export function expectedIds(g) {
-  return g.players.filter(p => {
-    if (!p.sea) return true;
-    return g.step === 1 && (p.ops > 0 || p.traps > 0);   // at sea: only to place an item
-  }).map(p => p.id);
+  return g.players.filter(p => canMove(p) || hasItems(p) || p.canEnd).map(p => p.id);
 }
 const nameOf = (g, id) => g.players[id].name;
 const rname = (M, r) => M.R[r].n;
-const knowsFace = (g, viewer, target) => !!g.players[viewer].assigned[target]?.face;
-const knowsVoice = (g, viewer, target) => !!g.players[viewer].assigned[target]?.voice;
-const ownsDossier = (g, viewer, target) => {
-  const a = g.players[viewer].assigned[target] || {}; return !!(a.passport && a.face && a.voice);
-};
+const knowsFace = (g, viewer, target) => g.players[viewer].assigned[target]?.face != null;
+const knowsVoice = (g, viewer, target) => g.players[viewer].assigned[target]?.voice != null;
 const REPORT_CAP = 100;
 function note(g, pid, entry) {
   const r = g.players[pid].report;
-  r.push({ seq: g.seq = (g.seq || 0) + 1, turn: g.turn, step: g.step, ...entry });
+  r.push({ seq: g.seq = (g.seq || 0) + 1, turn: g.turn, ...entry });
   if (r.length > REPORT_CAP) r.splice(0, r.length - REPORT_CAP);
 }
 function pub(g, entry) {
-  g.publicLog.push({ seq: g.seq = (g.seq || 0) + 1, turn: g.turn, step: g.step, public: true, ...entry });
+  g.publicLog.push({ seq: g.seq = (g.seq || 0) + 1, turn: g.turn, public: true, ...entry });
   if (g.publicLog.length > REPORT_CAP) g.publicLog.splice(0, g.publicLog.length - REPORT_CAP);
 }
-
-// replay: positions per step, compact ([pos or null at sea, route or null, resources held])
+// replay: per turn, [pos or null at sea, route or null, resources held]
 function snapshot(g) {
-  return { t: g.turn, s: g.step, p: g.players.map(p => [p.sea ? null : p.pos, p.sea ? p.sea.route : null, p.have.length]) };
+  return { t: g.turn, p: g.players.map(p => [p.sea ? null : p.pos, p.sea ? p.sea.route : null, p.have.length]) };
 }
 
 // ------------------------------------------------------------ validation (used by the server on submit)
 export function checkAction(M, g, p, a) {
   const out = { move: null, place: null, end: false };
   if (a.end) { if (!p.canEnd) return "You can only end the world from your bunker with all 7 resources."; out.end = true; }
-  if (!p.sea && !out.end) {
+  if (canMove(p) && !out.end) {
     const lm = legalMoves(M, g, p);
     if (lm.regions.includes(a.move)) out.move = a.move;
     else if (typeof a.move === "string" && a.move.startsWith("route:") && lm.routes.includes(a.move.slice(6))) out.move = a.move;
     else return "That move is not allowed. Pick a highlighted neighbor or a ship route from your port.";
   }
   if (a.place) {
-    if (g.step !== 1) return "Items can only be placed in step 1.";
-    const { kind, region } = a.place;
-    if (!M.R[region]) return "Pick a region on the map for your item.";
-    if (kind === "op" && p.ops < 1) return "You have no operatives to place.";
-    if (kind === "trap" && p.traps < 1) return "You have no traps to place.";
-    if (kind !== "op" && kind !== "trap") return "Unknown item.";
-    if (kind === "trap" && (g.traps[region] || []).includes(p.id)) return "You already have a trap there.";
-    out.place = { kind, region };
+    const pl = a.place;
+    if (pl.kind === "op" || pl.kind === "trap") {
+      if (!M.R[pl.region]) return "Pick a region on the map for your item.";
+      if (pl.kind === "op" && p.ops < 1) return "You have no operatives to place.";
+      if (pl.kind === "trap" && p.traps < 1) return "You have no traps to place.";
+      if (pl.kind === "trap" && (g.traps[pl.region] || []).includes(p.id)) return "You already have a trap there.";
+      out.place = { kind: pl.kind, region: pl.region };
+    } else if (pl.kind === "ray") {
+      if (p.rays < 1) return "You have no Space Ray.";
+      const c = Number(pl.cont); if (!(c >= 0 && c < 7)) return "Pick a continent for the Space Ray.";
+      out.place = { kind: "ray", cont: c };
+    } else if (pl.kind === "seduce") {
+      if (p.seducers < 1) return "You have no Seductress.";
+      const t = Number(pl.target); if (!g.players[t] || t === p.id) return "Pick a rival for the Seductress.";
+      out.place = { kind: "seduce", target: t };
+    } else return "Unknown item.";
   }
   return out;
 }
 
-// ------------------------------------------------------------ resolution
-export function resolveStep(M, g, actions) {
+// ------------------------------------------------------------ resolution: one turn
+export function resolveTurn(M, g, actions) {
   if (g.over) return;
-  const T = g.turn, S = g.step;
-  g.stepNo += 1;
+  const T = g.turn;
   const acts = {};
-  // 1. fill missing moves
+  // 1. fill missing actions
   for (const p of g.players) {
     let a = actions[p.id];
     if (!a || typeof a !== "object") a = {};
-    if (!actions[p.id] && p.canEnd) a = { end: true };          // the button presses itself
-    if (!p.sea && !a.end && !a.move) {
-      // no confirmed action: a random legal neighbor (never a ship), and no item
+    if (!actions[p.id] && p.canEnd) a = { end: true };            // the button presses itself
+    if (canMove(p) && !a.end && !a.move) {
       const lm = legalMoves(M, g, p);
       a = { move: lm.regions.length ? pick(lm.regions, g) : "route:" + pick(lm.routes, g), random: true };
       note(g, p.id, { kind: "timeout", region: a.move.startsWith("route:") ? null : a.move,
@@ -209,18 +214,29 @@ export function resolveStep(M, g, actions) {
     }
     acts[p.id] = a;
   }
-  // 2. place items (step 1)
-  if (S === 1) for (const p of g.players) {
+  // 2. items: operatives, traps, Space Rays, Seductresses
+  const frozenConts = new Set();
+  for (const p of g.players) {
     const pl = acts[p.id].place; if (!pl) continue;
     if (pl.kind === "op" && p.ops > 0) {
       g.operatives.push({ owner: p.id, region: pl.region, turn: T }); p.ops -= 1;
       note(g, p.id, { kind: "placed", region: pl.region, text: `Your operative is in place in ${rname(M, pl.region)}.` });
     } else if (pl.kind === "trap" && p.traps > 0 && !(g.traps[pl.region] || []).includes(p.id)) {
       (g.traps[pl.region] ||= []).push(p.id); p.traps -= 1;
-      (g.trapLog ||= []).push({ owner: p.id, region: pl.region, turn: T });
+      g.trapLog.push({ owner: p.id, region: pl.region, turn: T });
       note(g, p.id, { kind: "placed", region: pl.region, text: `Your trap is set in ${rname(M, pl.region)}.` });
+    } else if (pl.kind === "ray" && p.rays > 0) {
+      p.rays -= 1; frozenConts.add(pl.cont);
+      note(g, p.id, { kind: "rayfired", cont: pl.cont, text: `You fired your Space Ray at ${CONT_NAMES[pl.cont]}.` });
+    } else if (pl.kind === "seduce" && p.seducers > 0) {
+      const q = g.players[pl.target];
+      p.seducers -= 1; q.frozen = Math.max(q.frozen, SEDUCE_TURNS);
+      note(g, p.id, { kind: "seduced", who: q.id, text: `Your Seductress is keeping ${q.name} busy for ${SEDUCE_TURNS} turns.` });
+      note(g, q.id, { kind: "seduced", who: p.id, text: `${p.name}'s Seductress has you distracted. You can't move this turn or next.` });
     }
   }
+  [...frozenConts].forEach(c => pub(g, { kind: "ray", cont: c,
+    text: `A Space Ray hit ${CONT_NAMES[c]}. Nobody there could move this turn.` }));
   // end the world
   const enders = g.players.filter(p => acts[p.id].end && p.canEnd);
   if (enders.length) {
@@ -236,7 +252,19 @@ export function resolveStep(M, g, actions) {
   const attempts = [];
   for (const p of g.players) {
     const a = acts[p.id];
-    if (p.sea) { if (T >= p.sea.arrive) attempts.push({ p, to: p.sea.dest, arriving: true }); continue; }
+    if (p.sea) {
+      if (T >= p.sea.arrive) {
+        if (p.frozen > 0) note(g, p.id, { kind: "frozen", text: "Your ship is holding offshore while you're distracted." });
+        else attempts.push({ p, to: p.sea.dest, arriving: true });
+      }
+      continue;
+    }
+    if (p.frozen > 0) continue;                       // seduced: already told
+    if (frozenConts.has(M.R[p.pos].c)) {
+      note(g, p.id, { kind: "frozen", region: p.pos, text: `A Space Ray froze you in ${rname(M, p.pos)}. You couldn't move this turn.` });
+      continue;
+    }
+    if (!a.move) continue;
     if (a.move.startsWith("route:")) {
       const rt = M.routeById[a.move.slice(6)];
       const dest = rt.a === p.pos ? rt.b : rt.a;
@@ -246,30 +274,36 @@ export function resolveStep(M, g, actions) {
     }
     attempts.push({ p, to: a.move });
   }
-  // 4. traps roll
+  // 4. traps roll (your own traps can stop you too; 7 traps act like 6)
   const entered = [];
   for (const { p, to, arriving } of attempts) {
-    const owners = (g.traps[to] || []).filter(o => o !== p.id);
-    if (owners.length && rand(g) < TRAP_CHANCE[Math.min(owners.length, 6)]) {
+    const owners = g.traps[to] || [];
+    if (owners.length && rand(g) < TRAP_CHANCE[Math.min(owners.length, 7)]) {
       g.trapFires += 1;
+      const own = owners.includes(p.id);
       note(g, p.id, { kind: "trapped", region: to, text: arriving
-        ? `A trap held your ship off ${rname(M, to)}. It will try again.`
+        ? `A trap held your ship off ${rname(M, to)}. It will try again next turn.`
+        : own && owners.length === 1 ? `Your own trap held you at the ${rname(M, to)} border.`
         : `A trap held you at the ${rname(M, to)} border.` });
-      owners.forEach(o => note(g, o, { kind: "trapfired", region: to, who: knowsFace(g, o, p.id) ? p.id : null,
-        text: knowsFace(g, o, p.id) ? `Your trap in ${rname(M, to)} held ${p.name}.` : `Your trap in ${rname(M, to)} held someone.` }));
+      owners.filter(o => o !== p.id).forEach(o => {
+        g.players[o].seducers += 1;
+        const named = knowsFace(g, o, p.id);
+        note(g, o, { kind: "trapfired", region: to, who: named ? p.id : null,
+          text: `Your trap in ${rname(M, to)} held ${named ? p.name : "someone"}. You earned a Seductress.` });
+      });
       continue;
     }
     p.pos = to; if (arriving) { p.sea = null; note(g, p.id, { kind: "arrive", region: to, text: `Your ship arrived in ${rname(M, to)}.` }); }
     entered.push(p);
   }
-  // 5. pick up, 6. respawn
+  // 5. pick up and respawn
   for (const p of entered) {
     const r = p.pos;
     for (const [c, reg] of Object.entries(p.resources)) {
       if (reg === r && !p.have.includes(+c)) {
         p.have.push(+c);
         pub(g, { kind: "collect", who: p.id, cont: +c, text: `${p.name} collected the ${M.GM.continents[c].resource}.` });
-        if (p.have.length === 7) p.seventhAt = g.stepNo;
+        if (p.have.length === 7) p.seventhAt = T;
       }
     }
     const it = g.items[r] || [];
@@ -278,22 +312,20 @@ export function resolveStep(M, g, actions) {
       else if (kind === "trap" && p.traps < INVENTORY_CAP) { it.splice(it.indexOf(kind), 1); p.traps += 1; note(g, p.id, { kind: "pickup", text: `You picked up a trap in ${rname(M, r)}.` }); spawnItem(M, g, "trap"); }
     }
     if (!it.length) delete g.items[r];
-    for (const id of g.idents.filter(i => i.region === r && i.owner !== p.id && !p.taken.includes(i.id)).map(i => i.id)) {
-      const ident = g.idents.find(i => i.id === id);
-      p.taken.push(id); p.held.push(id);
+    for (const ident of g.idents.filter(i => i.region === r && i.owner !== p.id && !p.taken.includes(i.id))) {
+      p.taken.push(ident.id); p.held.push(ident.id);
       note(g, p.id, { kind: "pickup", text: `You found a ${ident.kind} in ${rname(M, r)}. Tap it to make its owner's phone react.` });
     }
-    // full dossier: reveal a rival's bunker when you walk into it
+    // walking into a rival's bunker marks it for you
     for (const q of g.players) {
-      if (q !== p && q.home === r && ownsDossier(g, p.id, q.id) && !p.bunkerKnown[q.id]) {
+      if (q !== p && q.home === r && !p.bunkerKnown[q.id]) {
         p.bunkerKnown[q.id] = r;
         note(g, p.id, { kind: "bunker", region: r, who: q.id, text: `You found ${q.name}'s bunker in ${rname(M, r)}.` });
       }
     }
   }
-  // 7. operatives report
-  const label = S === 1 ? "on the move" : "stopped";
-  const spottedBy = new Set();
+  // 6. operatives report, and earn Space Ray points
+  const spottedBy = new Set(), pointsFor = new Set();
   for (const o of g.operatives) {
     const vision = new Set([o.region, ...M.R[o.region].adj]);
     const opCont = M.R[o.region].c;
@@ -302,23 +334,32 @@ export function resolveStep(M, g, actions) {
       if (vision.has(q.pos)) {
         const named = knowsFace(g, o.owner, q.id);
         note(g, o.owner, { kind: "sighting", region: q.pos, op: o.region, who: named ? q.id : null,
-          text: named ? `Your operative in ${rname(M, o.region)} saw ${q.name} ${label} in ${rname(M, q.pos)}.`
-                      : `Your operative in ${rname(M, o.region)} saw someone ${label} in ${rname(M, q.pos)}.` });
+          text: named ? `Your operative in ${rname(M, o.region)} saw ${q.name} in ${rname(M, q.pos)}.`
+                      : `Your operative in ${rname(M, o.region)} saw someone in ${rname(M, q.pos)}.` });
         if (named) (g.players[o.owner].intel[q.id] ||= {}).seen = { region: q.pos, turn: T };
         const key = q.id + ":" + o.owner;
-        if (!spottedBy.has(key)) { spottedBy.add(key);
-          note(g, q.id, { kind: "spotted", who: o.owner, text: `You were spotted by ${nameOf(g, o.owner)}'s operative.` }); }
+        if (!spottedBy.has(key)) {
+          spottedBy.add(key);
+          note(g, q.id, { kind: "spotted", who: o.owner, text: `You were spotted by ${nameOf(g, o.owner)}'s operative.` });
+        }
+        if (!pointsFor.has(key)) {                    // one point per rival spotted, per turn
+          pointsFor.add(key);
+          const own = g.players[o.owner];
+          own.rayPoints += 1;
+          if (own.rayPoints >= RAY_POINTS) { own.rayPoints -= RAY_POINTS; own.rays += 1;
+            note(g, own.id, { kind: "rayearned", text: "Your operatives have spotted 3 rivals. You earned a Space Ray." }); }
+        }
       } else if (knowsVoice(g, o.owner, q.id) && M.R[q.pos].c === opCont) {
         const intel = (g.players[o.owner].intel[q.id] ||= {});
-        if (!(intel.heard && intel.heard.turn === T && intel.heard.step === S)) {
-          intel.heard = { cont: opCont, turn: T, step: S };
+        if (!(intel.heard && intel.heard.turn === T)) {
+          intel.heard = { cont: opCont, turn: T };
           note(g, o.owner, { kind: "voice", who: q.id, cont: opCont,
             text: `Your operatives heard ${q.name}'s voice somewhere in ${M.GM.continents[opCont].name}.` });
         }
       }
     }
   }
-  // 8. same-region sightings
+  // 7. same-region sightings
   for (const p of g.players) {
     if (p.sea) continue;
     for (const q of g.players) {
@@ -329,15 +370,14 @@ export function resolveStep(M, g, actions) {
       if (named) (p.intel[q.id] ||= {}).seen = { region: p.pos, turn: T };
     }
   }
-  // 10. bunker check
+  // 8. bunker check, freezes wear off, next turn
   for (const p of g.players) {
     const was = p.canEnd;
     p.canEnd = !p.sea && p.pos === p.home && p.have.length === 7;
     if (p.canEnd && !was) note(g, p.id, { kind: "ready", text: "You're in your bunker with all 7 resources. End the world." });
+    if (p.frozen > 0) p.frozen -= 1;
   }
-  // advance
-  if (S === 1) { g.step = 2; }
-  else { g.turn += 1; g.step = 1; }
+  g.turn += 1;
   g.history.push(snapshot(g));
 }
 
@@ -347,8 +387,9 @@ export function assignIdent(g, pid, identId, targetId) {
   if (!p.held.includes(identId)) return { error: "You don't hold that identifier." };
   const ident = g.idents.find(i => i.id === identId);
   if (targetId === pid || !g.players[targetId]) return { error: "Drop it on a rival." };
-  if (p.assigned[targetId]?.[ident.kind]) return { error: `You already know ${g.players[targetId].name}'s ${ident.kind}.` };
+  if (p.assigned[targetId]?.[ident.kind] != null) return { error: `You already know ${g.players[targetId].name}'s ${ident.kind}.` };
   p.held = p.held.filter(i => i !== identId);
+  cancelTradesWith(g, identId);
   if (ident.owner === targetId) {
     (p.assigned[targetId] ||= {})[ident.kind] = ident.sprite;
     const unlock = { passport: `${g.players[targetId].name}'s bunker is somewhere in this continent.`,
@@ -357,7 +398,6 @@ export function assignIdent(g, pid, identId, targetId) {
     note(g, pid, { kind: "assign", who: targetId, text: `Match! That ${ident.kind} belongs to ${g.players[targetId].name}. ${unlock}` });
     return { ok: true, correct: true };
   }
-  p.lost.push(identId);
   note(g, pid, { kind: "assign", text: `Wrong person. That ${ident.kind} is gone for good.` });
   return { ok: true, correct: false };
 }
@@ -374,9 +414,48 @@ export function pingIdent(g, pid, identId, now) {
   return { ok: true };
 }
 
+// trades: one player offers an identifier, the other answers with one of theirs or says no
+function cancelTradesWith(g, identId) {
+  g.trades.filter(t => t.status === "open" && t.give === identId).forEach(t => { t.status = "cancelled"; });
+}
+export function offerTrade(g, pid, targetId, identId, now) {
+  const p = g.players[pid], q = g.players[targetId];
+  if (!q || q === p) return { error: "Pick a rival to trade with." };
+  if (!p.held.includes(identId)) return { error: "Offer one of your identifiers." };
+  if (g.trades.some(t => t.status === "open" && (t.from === pid || t.to === pid))) return { error: "Finish your open trade first." };
+  if (g.trades.some(t => t.status === "open" && (t.from === targetId || t.to === targetId))) return { error: `${q.name} is already in a trade. Try again in a moment.` };
+  const t = { id: uid(g), from: pid, to: targetId, give: identId, status: "open", at: now };
+  g.trades.push(t);
+  if (g.trades.length > 30) g.trades = g.trades.slice(-30);
+  return { ok: true, trade: t.id };
+}
+export function answerTrade(g, pid, tradeId, identId) {
+  const t = g.trades.find(x => x.id === tradeId);
+  if (!t || t.status !== "open") return { error: "That trade is no longer open." };
+  if (t.to !== pid) return { error: "That trade isn't yours to answer." };
+  const from = g.players[t.from], to = g.players[t.to];
+  if (!from.held.includes(t.give)) { t.status = "cancelled"; return { error: `${from.name} no longer has that identifier.` }; }
+  if (!to.held.includes(identId)) return { error: "Offer one of your identifiers." };
+  from.held = from.held.filter(i => i !== t.give); from.held.push(identId);
+  to.held = to.held.filter(i => i !== identId); to.held.push(t.give);
+  t.get = identId; t.status = "done";
+  const gk = g.idents.find(i => i.id === t.give).kind, rk = g.idents.find(i => i.id === identId).kind;
+  note(g, from.id, { kind: "trade", who: to.id, text: `Trade done: you gave ${to.name} a ${gk} and got a ${rk}.` });
+  note(g, to.id, { kind: "trade", who: from.id, text: `Trade done: you gave ${from.name} a ${rk} and got a ${gk}.` });
+  return { ok: true };
+}
+export function closeTrade(g, pid, tradeId) {
+  const t = g.trades.find(x => x.id === tradeId);
+  if (!t || t.status !== "open") return { ok: true };
+  if (t.to === pid) { t.status = "rejected"; note(g, t.from, { kind: "trade", who: pid, text: `${g.players[pid].name} turned down your trade.` }); return { ok: true }; }
+  if (t.from === pid) { t.status = "cancelled"; return { ok: true }; }
+  return { error: "That trade isn't yours." };
+}
+
 // ------------------------------------------------------------ what one player may see
 export function playerView(M, g, pid, revealAll) {
   const me = pid != null ? g.players[pid] : null;
+  const identInfo = id => { const i = g.idents.find(x => x.id === id); return { id, kind: i.kind, sprite: i.sprite, mine: me ? i.owner === me.id : false }; };
   const hints = [];
   if (me && !me.sea) {
     for (const r of M.R[me.pos].adj) {
@@ -390,29 +469,31 @@ export function playerView(M, g, pid, revealAll) {
     const a = me ? me.assigned[p.id] || {} : {};
     const intel = me ? me.intel[p.id] || {} : {};
     return {
-      id: p.id, name: p.name, color: p.color, have: p.have.slice(), canEnd: revealAll || mine ? p.canEnd : undefined,
+      id: p.id, name: p.name, color: p.color, have: p.have.slice(),
       pos: revealAll || mine ? p.pos : null, sea: revealAll || mine ? p.sea : null,
+      frozen: revealAll || mine ? p.frozen : undefined,
       home: revealAll || mine ? p.home : (me && me.bunkerKnown[p.id]) || null,
       homeCont: revealAll || mine || a.passport != null ? p.homeCont : null,
       slots: revealAll ? p.sprites : mine ? null : { passport: a.passport ?? null, face: a.face ?? null, voice: a.voice ?? null },
       seen: intel.seen || null, heard: intel.heard || null,
     };
   });
-  const v = {
-    turn: g.turn, step: g.step, over: g.over, winner: g.winner, draw: g.draw, players,
-    publicLog: g.publicLog.slice(-60),
-  };
+  const v = { turn: g.turn, over: g.over, winner: g.winner, draw: g.draw, players };
   if (me) Object.assign(v, {
-    pid, resources: me.resources, have: me.have, ops: me.ops, traps: me.traps, canEnd: me.canEnd,
-    held: me.held.map(id => { const i = g.idents.find(x => x.id === id); return { id, kind: i.kind, sprite: i.sprite }; }),
+    pid, resources: me.resources, have: me.have, canEnd: me.canEnd, frozen: me.frozen,
+    ops: me.ops, traps: me.traps, rays: me.rays, rayPoints: me.rayPoints, seducers: me.seducers,
+    held: me.held.map(identInfo),
     myOperatives: g.operatives.filter(o => o.owner === me.id).map(o => o.region),
     myTraps: Object.entries(g.traps).filter(([, os]) => os.includes(me.id)).map(([r]) => r),
-    hints, tour: me.tour,
+    hints, tour: me.tour, mySprites: me.sprites,
     report: [...me.report, ...g.publicLog].sort((a, b) => a.seq - b.seq).slice(-200),
     pings: g.pings.filter(x => x.to === me.id),
+    trades: g.trades.filter(t => t.from === me.id || t.to === me.id).slice(-6).map(t => ({
+      id: t.id, from: t.from, to: t.to, status: t.status, at: t.at,
+      give: identInfo(t.give), get: t.get ? identInfo(t.get) : null })),
   });
   if (revealAll) Object.assign(v, {
-    allTraps: g.traps, trapLog: g.trapLog || [], allOperatives: g.operatives, items: g.items,
+    allTraps: g.traps, trapLog: g.trapLog, allOperatives: g.operatives, items: g.items,
     idents: g.idents, allResources: g.players.map(p => p.resources), history: g.history,
   });
   return v;

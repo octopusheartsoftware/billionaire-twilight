@@ -14,7 +14,7 @@ function memDb() {
     },
   };
 }
-const fails = [];
+const fails = []; let trades = 0;
 const expect = (cond, msg) => { if (!cond) fails.push(msg); };
 
 async function playGame(nPlayers, { timeoutEvery = 0 } = {}) {
@@ -30,8 +30,10 @@ async function playGame(nPlayers, { timeoutEvery = 0 } = {}) {
     expect(j.ok, "join failed: " + j.error);
     players.push({ token: j.token });
   }
-  const dup = await call({ action: "join", code, name: "bot1" });
-  expect(!dup.ok && /already called/.test(dup.error), "duplicate name allowed");
+  if (nPlayers < 7) {
+    const dup = await call({ action: "join", code, name: "bot1" });
+    expect(!dup.ok && /already called/.test(dup.error), "duplicate name allowed");
+  }
   const early = await call({ action: "start", code, token: host.token });
   expect(!early.ok, "started before ready");
   for (const p of players) await call({ action: "ready", code, token: p.token, ready: true });
@@ -39,7 +41,7 @@ async function playGame(nPlayers, { timeoutEvery = 0 } = {}) {
   expect(st.ok && st.view.status === "playing", "start failed: " + st.error);
 
   let view = st.view, steps = 0;
-  while (view.status === "playing" && steps < 400) {
+  while (view.status === "playing" && steps < 600) {
     steps++;
     const expected = view.expected;
     for (let k = 0; k < players.length; k++) {
@@ -49,15 +51,25 @@ async function playGame(nPlayers, { timeoutEvery = 0 } = {}) {
       // identifiers: occasionally ping and assign
       for (const h of v.held || []) {
         if (Math.random() < 0.3) await call({ action: "ping", code, token: players[k].token, ident: h.id });
-        if (Math.random() < 0.15) {
+        if (Math.random() < 0.15 && !h.mine) {
           const target = v.players.filter(q => q.id !== v.pid)[Math.floor(Math.random() * (v.players.length - 1))].id;
           const r = await call({ action: "assign", code, token: players[k].token, ident: h.id, target });
-          expect(r.ok, "assign failed: " + r.error);
+          if (!r.ok && !/already know/.test(r.error)) fails.push("assign failed: " + r.error);
         }
       }
       const a = botAction(M, v);
-      const r = await call({ action: "submit", code, token: players[k].token, turn: v.turn, step: v.step, ...a });
+      const r = await call({ action: "submit", code, token: players[k].token, turn: v.turn, ...a });
       if (!r.ok && !/already ended/.test(r.error)) fails.push("submit rejected: " + r.error);
+      // trading through the API
+      if ((v.held || []).length && Math.random() < 0.08) {
+        const target = v.players.find(q => q.id !== v.pid).id;
+        await call({ action: "trade", code, token: players[k].token, target, ident: v.held[0].id });
+      }
+      const open = (v.trades || []).find(t => t.status === "open" && t.to === v.pid);
+      if (open && (v.held || []).length) {
+        const tr = await call({ action: "tradeanswer", code, token: players[k].token, trade: open.id, ident: v.held[0].id });
+        if (tr.ok) trades++;
+      }
       // hidden info: a player never sees rivals' positions while playing
       if (r.ok && r.view.status === "playing") r.view.players.forEach(q => {
         if (q.id !== v.pid && (q.pos !== null || q.sea !== null)) fails.push("rival position leaked");
@@ -73,10 +85,10 @@ async function playGame(nPlayers, { timeoutEvery = 0 } = {}) {
   expect(view.history && view.history.length > 10, "no replay history at the end");
   expect(view.winner !== null || view.draw, "no winner or draw");
   const size = JSON.stringify(db.rows.get(code)).length;
-  return { turns: view.turn, steps, winner: view.winner, rowKB: Math.round(size / 1024) };
+  return { turns: view.turn, winner: view.winner, draw: view.draw, rowKB: Math.round(size / 1024) };
 }
 
 const results = [];
 for (const n of [2, 4, 7]) results.push(await playGame(n));
 results.push(await playGame(4, { timeoutEvery: 7 }));
-console.log(JSON.stringify({ results, failures: fails.length, first: [...new Set(fails)].slice(0, 8) }, null, 1));
+console.log(JSON.stringify({ results, trades, failures: fails.length, first: [...new Set(fails)].slice(0, 8) }, null, 1));

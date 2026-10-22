@@ -15,7 +15,7 @@
   --sea:#14181b; --land:#3a4147; --land-hi:#475059; --edge:#1b1e21;
   --ink:#e9ecee; --muted:#98a1a8; --faint:#6b747b;
   --gold:#e0b23a; --gold-dim:rgba(224,178,58,.28); --move:#5fbf6b; --move-dim:rgba(95,191,107,.35);
-  --hint:rgba(95,191,107,.22); --danger:#e5534b; --sea-line:#3c6e91;
+  --hint:#4fd6ff; --hint-fill:rgba(79,214,255,.30); --danger:#e5534b; --sea-line:#3c6e91; --ray:#7ff5ff;
   --f-display:"Chakra Petch","Trebuchet MS",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
@@ -76,9 +76,9 @@ input,select{font:inherit;color:var(--ink);background:var(--void);border:1px sol
 .slot.filled{border-style:solid;border-color:var(--land-hi)}
 .slot .lab{font-family:var(--f-mono);font-size:8.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
 .pips{display:flex;gap:3px}
-.pip{width:22px;height:22px;border-radius:4px;background:var(--void);display:grid;place-items:center;opacity:.35}
-.pip.on{opacity:1;background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--gold-dim)}
-.pip svg{width:16px;height:16px}
+.pip{width:22px;height:22px;border-radius:4px;background:var(--void);display:grid;place-items:center;opacity:.3;overflow:hidden;filter:grayscale(.7)}
+.pip.on{opacity:1;filter:none;box-shadow:0 0 0 1px var(--gold)}
+.pip img{width:100%;height:100%;display:block}
 .intel{font-size:12px;line-height:1.35;color:var(--muted);display:grid;grid-template-columns:auto 1fr;gap:0 8px}
 .intel b{font-weight:500;color:var(--faint);font-family:var(--f-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding-top:1px}
 .intel span{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -101,7 +101,7 @@ svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-selec
 .tok .cool{position:absolute;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;font-family:var(--f-mono);font-size:13px;pointer-events:none}
 .tok.sel{outline:2px solid var(--gold)}
 .empty{color:var(--faint);font-size:13px}
-.items{display:flex;gap:8px}
+.items{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .item{flex:1;display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);cursor:pointer;text-align:left}
 .item img{width:36px;height:36px;border-radius:6px}
 .item b{font-family:var(--f-mono);font-size:16px}
@@ -110,7 +110,7 @@ svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-selec
 .item:disabled{opacity:.4;cursor:default}
 .mine{display:flex;gap:4px;flex-wrap:wrap}
 .mine .pip{width:30px;height:30px}
-.mine .pip svg{width:20px;height:20px}
+
 .actions{display:flex;flex-direction:column;gap:8px;margin-top:auto}
 .status{font-size:13.5px;color:var(--muted);min-height:2.6em}
 .status b{color:var(--ink);font-weight:600}
@@ -120,8 +120,25 @@ svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-selec
 /* map marks */
 .rg{stroke:var(--edge);stroke-width:.6px;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 .rg.legal{fill:var(--move-dim)}
-.rg.target{fill:var(--move)}
-.rg.hint{fill:var(--hint)}
+.rg.target{fill:var(--move)!important}
+.rg.hint{fill:var(--hint-fill);stroke:var(--hint);stroke-width:2px;animation:hintglow 1.6s ease-in-out infinite}
+@keyframes hintglow{50%{fill:rgba(79,214,255,.12)}}
+.rg.raysel{fill:rgba(127,245,255,.35)}
+.rg.flash{animation:rayflash .45s steps(2) 6}
+@keyframes rayflash{0%{fill:#e9feff}100%{fill:rgba(127,245,255,.25)}}
+.strait.wrap{fill:none;stroke-dasharray:5 4}
+.rival.pickme{border-color:#f07cc0;box-shadow:0 0 0 2px rgba(240,124,192,.35);cursor:pointer}
+.frozenbadge{font-family:var(--f-mono);font-size:10.5px;color:#f07cc0;margin-left:6px}
+.item .prog{display:block;font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
+.tok .yours{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);font-size:9px;font-family:var(--f-mono);text-align:center;letter-spacing:.06em}
+.tradebox{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}
+.tslot{aspect-ratio:1;border:1px dashed var(--border);border-radius:12px;display:grid;place-items:center;text-align:center;color:var(--faint);font-size:12px;padding:6px;overflow:hidden;max-width:140px;width:100%;justify-self:center}
+.tslot img{width:100%;height:100%;border-radius:8px}
+.tslot.filled{border-style:solid;border-color:var(--gold)}
+.pickrow{display:flex;flex-wrap:wrap;gap:8px}
+.pickrow .tok{cursor:pointer}
+.whos{display:flex;flex-wrap:wrap;gap:8px}
+.whos .btn{min-height:40px}
 .rg.vision{fill:rgba(224,178,58,.18)}
 .rg.oprg{fill:rgba(224,178,58,.5)}
 .rg.pulse{animation:pulse 1.4s ease-in-out infinite}
@@ -152,25 +169,33 @@ svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-selec
 /* ---------- phones ---------- */
 @media (max-width:820px){
   .main{flex-direction:column}
-  .rail{width:auto;border-left:0;border-top:1px solid var(--border);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;overflow:visible;
+  .rail{width:auto;border-left:0;border-top:1px solid var(--border);display:grid;grid-template-columns:minmax(0,1fr);gap:6px;overflow:visible;
     padding-block:8px;padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
   .rail h3,.rail .tip{display:none}
-  #sec-res{grid-column:1;grid-row:1;align-self:center} #sec-items{grid-column:2;grid-row:1} #sec-ids{grid-column:1 / -1;grid-row:2}
+  #sec-res{grid-row:1} #sec-items{grid-row:2} #sec-ids{grid-row:3}
+  #sec-ids > .row{position:absolute;top:7px;right:max(10px,env(safe-area-inset-right,0px))}
+  #sec-ids > .row h3{display:none}
+  .rail{position:relative}
+  #sec-ids .tray .empty{display:none}
+  #sec-ids .tray:has(.empty){display:none}
   #my-res{margin-top:0!important}
-  .mine .pip{width:26px;height:26px}.mine .pip svg{width:18px;height:18px}
+  .mine .pip{width:26px;height:26px}
   .items{margin-top:0!important;gap:6px}
   .item{padding:3px 6px;gap:5px}.item img{width:30px;height:30px}.item small{display:none}
   .tray{min-height:0;flex-wrap:nowrap;overflow-x:auto;gap:6px}
   .tok{width:44px;height:44px;flex:none}
   .empty{font-size:12px}
-  .rail .actions{grid-column:1 / -1;grid-row:3;flex-direction:row;align-items:center;margin-top:0;gap:8px}
+  .rail .actions{grid-row:4;flex-direction:row;align-items:center;margin-top:0;gap:8px}
+  .item .prog{font-size:9.5px}
   .rail .actions .status{flex:1;min-width:0;min-height:0;font-size:12.5px;line-height:1.3}
   .rail .actions .btn{flex:none;min-height:44px;padding:0 16px}
   .rivals{padding-block:6px;gap:6px}
   .rival{width:158px;padding:6px 8px;gap:4px}
   .rival .nm{font-size:14px}
   .slot{width:30px;height:30px}.slot .lab{font-size:7.5px}
-  .pip{width:18px;height:18px}.pip svg{width:13px;height:13px}
+  .pip{width:18px;height:18px}
+  .items{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .item b{font-size:14px}
   .intel{font-size:11px;line-height:1.25}
   .topbar .turn{font-size:11px;flex:none}
   .topbar .who{flex:1 1 auto}
@@ -185,13 +210,6 @@ svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-selec
 <!-- svg icon set: resources (placeholders until the real art arrives) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <symbol id="res-0" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="3" fill="#7aa7d9"/><circle cx="8" cy="12" r="2.6" fill="#1b1e21"/><circle cx="16" cy="12" r="2.6" fill="#1b1e21"/><rect x="10.5" y="5" width="3" height="2" fill="#7aa7d9"/></symbol>
-    <symbol id="res-1" viewBox="0 0 24 24"><rect x="10" y="2" width="4" height="6" fill="#5b2235"/><path d="M8 10q0-2 4-2t4 2v11q0 1-1 1H9q-1 0-1-1z" fill="#8c2f4b"/><rect x="8.6" y="13" width="6.8" height="4" fill="#e9dcc0"/></symbol>
-    <symbol id="res-2" viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="5" ry="4" fill="#d9a23c"/><circle cx="6" cy="10" r="2.2" fill="#d9a23c"/><circle cx="10" cy="7" r="2.2" fill="#d9a23c"/><circle cx="14" cy="7" r="2.2" fill="#d9a23c"/><circle cx="18" cy="10" r="2.2" fill="#d9a23c"/></symbol>
-    <symbol id="res-3" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" fill="#c6993d"/><rect x="4.5" y="6.5" width="15" height="11" fill="#2f4f6e"/><path d="M4.5 17.5l5-6 3 3.5 2.5-2.5 4.5 5z" fill="#6f9a5a"/><circle cx="16" cy="9.5" r="1.5" fill="#f0d27a"/></symbol>
-    <symbol id="res-4" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="5" fill="#9fb3c2"/><rect x="9.5" y="5" width="5" height="9" rx="2.5" fill="#6fe0e6"/><rect x="9" y="17" width="6" height="1.6" fill="#5c6c78"/></symbol>
-    <symbol id="res-5" viewBox="0 0 24 24"><rect x="11" y="1.5" width="2" height="3.5" fill="#b9c3cb"/><circle cx="12" cy="1.8" r="1.4" fill="#e5534b"/><rect x="5" y="5" width="14" height="11" rx="2.5" fill="#b9c3cb"/><circle cx="9" cy="10" r="1.8" fill="#1b1e21"/><circle cx="15" cy="10" r="1.8" fill="#1b1e21"/><rect x="9" y="13" width="6" height="1.2" fill="#1b1e21"/><rect x="7" y="17" width="10" height="5" rx="1" fill="#2b2f33"/><rect x="11.2" y="17" width="1.6" height="3" fill="#e9ecee"/></symbol>
-    <symbol id="res-6" viewBox="0 0 24 24"><path d="M3 20a9 9 0 0 1 18 0z" fill="#7cc7d9" opacity=".45"/><path d="M3 20a9 9 0 0 1 18 0" fill="none" stroke="#bfe6ee" stroke-width="1.2"/><path d="M8 20v-5l-2-2M8 15l2-2M14 20v-6l2-2M14 16l-2-2" stroke="#ef7d6b" stroke-width="1.8" fill="none" stroke-linecap="round"/><rect x="2" y="20" width="20" height="2" fill="#8a6a46"/></symbol>
     <symbol id="ico-star" viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8-6.3 3.8 1.7-7L2 9.2l7.1-.6z"/></symbol>
     <symbol id="ico-ship" viewBox="0 0 24 24"><path d="M3 14h18l-3 6H6z"/><path d="M11 3h2v10h-2z"/><path d="M13 4l6 7h-6z"/></symbol>
   </defs>
@@ -235,8 +253,8 @@ svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-selec
       <div class="card">
         <label class="eyebrow" for="lb-name">Your name</label>
         <div class="row"><input id="lb-name" maxlength="14"><button id="btn-rename" class="btn" style="flex:none">Save</button></div>
-        <label class="eyebrow" for="lb-timer">Step timer</label>
-        <select id="lb-timer"><option value="30">30 seconds per step</option><option value="45">45 seconds per step</option><option value="60">60 seconds per step</option><option value="0">No timer</option></select>
+        <label class="eyebrow" for="lb-timer">Turn timer</label>
+        <select id="lb-timer"><option value="30">30 seconds per turn</option><option value="45">45 seconds per turn</option><option value="60">60 seconds per turn</option><option value="0">No timer</option></select>
         <div class="row"><button id="btn-ready" class="btn" style="flex:1">Ready</button><button id="btn-start" class="btn gold" style="flex:1">Start game</button></div>
         <div class="row"><button class="btn ghosty sndbtn" style="flex:1">Sound on</button><button id="btn-leave" class="btn ghosty" style="flex:1">Leave room</button></div>
       </div>
@@ -265,7 +283,7 @@ svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-selec
         <button class="icon-btn" id="z-me" aria-label="Center on me">◎</button>
         <button class="icon-btn" id="z-all" aria-label="Whole world">⤢</button>
       </div>
-      <div class="legend"><span><i style="background:var(--move)"></i>Legal move</span><span><i style="background:var(--hint)"></i>Something next door</span><span><i style="background:rgba(224,178,58,.5)"></i>Operative</span><span><i style="background:rgba(229,83,75,.55)"></i>Located someone</span></div>
+      <div class="legend"><span><i style="background:var(--move)"></i>Legal move</span><span><i style="background:var(--hint)"></i>Something to pick up</span><span><i style="background:rgba(224,178,58,.5)"></i>Operative</span><span><i style="background:rgba(229,83,75,.55)"></i>Located someone</span></div>
     </div>
     <aside class="rail">
       <section id="sec-res">
@@ -273,7 +291,7 @@ svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-selec
         <div id="my-res" class="mine" style="margin-top:6px"></div>
       </section>
       <section id="sec-ids">
-        <h3>Identifiers</h3>
+        <div class="row" style="justify-content:space-between"><h3>Identifiers</h3><button id="btn-trade" class="btn ghosty" style="min-height:32px;padding:0 12px;font-size:13px">Trade</button></div>
         <div class="eyebrow tip" style="margin:2px 0 6px;text-transform:none;letter-spacing:0">Tap to make its owner's phone react. Drag onto a rival to assign.</div>
         <div id="tray" class="tray"></div>
       </section>
@@ -282,6 +300,8 @@ svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-selec
         <div class="items" style="margin-top:6px">
           <button id="it-op" class="item"><img src="sprites/operative.png" alt=""><span><b id="it-op-n">0</b><small>Operatives</small></span></button>
           <button id="it-trap" class="item"><img src="sprites/trap.png" alt=""><span><b id="it-trap-n">0</b><small>Traps</small></span></button>
+          <button id="it-ray" class="item"><img src="sprites/spaceray.png" alt=""><span><b id="it-ray-n">0</b><small>Space Ray</small><span id="it-ray-p" class="prog"></span></span></button>
+          <button id="it-seduce" class="item"><img src="sprites/seductress.png" alt=""><span><b id="it-seduce-n">0</b><small>Seductress</small></span></button>
         </div>
       </section>
       <div class="actions">
@@ -311,6 +331,19 @@ svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-selec
   </div>
 </div>
 
+<!-- trade -->
+<div id="ov-trade" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-label="Trade identifiers">
+    <div class="row" style="justify-content:space-between"><h2 id="tr-title">Trade</h2><button class="icon-btn" id="tr-x" aria-label="Close">✕</button></div>
+    <p id="tr-text" style="margin:0;color:var(--muted)"></p>
+    <div id="tr-who" class="whos"></div>
+    <div class="tradebox"><div id="tr-left" class="tslot"></div><div style="font-size:22px;color:var(--muted)">⇄</div><div id="tr-right" class="tslot"></div></div>
+    <div class="eyebrow" id="tr-pick-label">Your identifiers</div>
+    <div id="tr-pick" class="pickrow"></div>
+    <div class="row"><button id="tr-no" class="btn ghosty" style="flex:1">Cancel</button><button id="tr-go" class="btn gold" style="flex:1">Offer</button></div>
+  </div>
+</div>
+
 <!-- game over -->
 <div id="ov-over" class="overlay" hidden>
   <div class="dialog wide" role="dialog" aria-label="Game over">
@@ -319,7 +352,7 @@ svg#map{width:100%;height:100%;display:block;user-select:none;-webkit-user-selec
     <p id="ov-sub" style="margin:0;color:var(--muted)"></p>
     <div class="replay">
       <svg id="replay" role="img" aria-label="Replay"></svg>
-      <div class="row"><button class="icon-btn" id="rp-prev" aria-label="Previous step">‹</button><input type="range" id="rp-range" min="0" value="0" aria-label="Replay step"><button class="icon-btn" id="rp-next" aria-label="Next step">›</button></div>
+      <div class="row"><button class="icon-btn" id="rp-prev" aria-label="Previous turn">‹</button><input type="range" id="rp-range" min="0" value="0" aria-label="Replay turn"><button class="icon-btn" id="rp-next" aria-label="Next turn">›</button></div>
       <div id="rp-label" class="eyebrow"></div>
     </div>
     <div class="row"><button id="ov-home" class="btn" style="flex:1">Back to start</button><button id="ov-close" class="btn ghosty" style="flex:1">Look at the map</button></div>
@@ -344,7 +377,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&
 const NS = 'http://www.w3.org/2000/svg';
 const RES_NAMES = ['VR headset','Vintage wine','Exotic pet','Renaissance oil painting','Stasis pod','Robot butler','Great Barrier Coral terrarium'];
 const CONT_NAMES = ['Northern Americas','Southern Americas','Africa','Europe','Russia/North Asia','Southern/East Asia','Australia'];
-const resIcon = c => `<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#res-${c}"/></svg>`;
+const resIcon = c => `<img src="sprites/res-${c}.png" alt="">`;
 
 const store = {
   get(k){ try { return JSON.parse(localStorage.getItem('bt:' + k)); } catch { return null; } },
@@ -353,11 +386,11 @@ const store = {
 };
 
 const S = { code:null, token:null, view:null, fetching:false, lastFetch:0, live:false, deadline:Infinity,
-  draft:{ move:null, place:null }, placing:null, stepKey:null, autoSent:false, sending:false,
+  draft:{ move:null, place:null }, placing:null, turnKey:null, autoSent:false, sending:false, flashUntil:0, flashCont:[],
   lastSeq:0, seenSeq:0, lastPingAt:0, cool:{}, overShown:false };
 
 /* ================= map ================= */
-let MAP = null, REG = {}, ROUTES = [], W = 2000, H = 940;
+let MAP = null, REG = {}, ROUTES = [], WRAPS = [], W = 2000, H = 940;
 const mapReady = fetch('data/world-map.json').then(r => r.json()).then(m => {
   MAP = m; W = m.viewBox[2]; H = m.viewBox[3];
   m.regions.forEach(r => REG[r.id] = r);
@@ -378,12 +411,26 @@ function buildMap(){
     const p = el('path', { d: r.path, class: 'rg', fill: contTint(r.ci), 'data-id': r.id }, gRegions);
     paths[r.id] = p;
   });
+  WRAPS = []; let wrapN = 0;
   MAP.straits.forEach(s => {
     const [a, b] = s.line;
-    if (s.wraps){ const [L, R] = a[0] < b[0] ? [a, b] : [b, a]; el('line', { x1:L[0], y1:L[1], x2:0, y2:L[1], class:'strait' }, gSea); el('line', { x1:R[0], y1:R[1], x2:W, y2:R[1], class:'strait' }, gSea); }
-    else el('line', { x1:a[0], y1:a[1], x2:b[0], y2:b[1], class:'strait' }, gSea);
+    if (s.wraps){
+      // e.g. the Bering Strait: a short curved stub off each edge, with matching numbers
+      const n = ++wrapN, [L, R] = a[0] < b[0] ? [a, b] : [b, a];
+      const lEnd = [Math.max(14, L[0] - 80), L[1] - 22], rEnd = [Math.min(W - 14, R[0] + 80), R[1] - 22];
+      el('path', { d:curve(L, lEnd, .3).d, class:'strait wrap' }, gSea); el('path', { d:curve(R, rEnd, -.3).d, class:'strait wrap' }, gSea);
+      const label = `${n}: ${s.name} (${REG[s.a].name} – ${REG[s.b].name}, one normal move)`;
+      WRAPS.push({ x:lEnd[0], y:lEnd[1], n, color:'#6aa9d6', label }, { x:rEnd[0], y:rEnd[1], n, color:'#6aa9d6', label });
+    } else el('line', { x1:a[0], y1:a[1], x2:b[0], y2:b[1], class:'strait' }, gSea);
   });
-  ROUTES.forEach(rt => { rt.el = routePaths(rt).map(d => el('path', { d, class:'route' }, gSea)); });
+  ROUTES.forEach(rt => {
+    rt.el = routePaths(rt).map(d => el('path', { d, class:'route' }, gSea));
+    if (rt.wraps){
+      const n = ++wrapN, [a, b] = rt.ports, y = (a[1] + b[1]) / 2;
+      const label = `${n}: ${rt.name} (${REG[rt.a].name} – ${REG[rt.b].name}, ${rt.turns} turns at sea)`;
+      WRAPS.push({ x:14, y, n, color:'#8fb8d8', label }, { x:W - 14, y, n, color:'#8fb8d8', label });
+    }
+  });
   MAP.regions.forEach(r => { const t = el('text', { x:r.label[0], y:r.label[1], class:'lbl' }, gLabels); t.textContent = r.name; r.lblEl = t; });
   resetView(); applyView();
 }
@@ -556,25 +603,26 @@ function apply(v){
   if (S.view && v.code === S.view.code && v.version < S.view.version) return;
   const prev = S.view; S.view = v;
   if (v.status === 'lobby'){ renderLobby(); show('lobby'); return; }
-  const key = v.turn + '.' + v.step;
-  if (key !== S.stepKey){
-    const first = S.stepKey == null; S.stepKey = key;
+  const key = v.turn;
+  if (key !== S.turnKey){
+    const first = S.turnKey == null; S.turnKey = key;
     S.draft = { move:null, place:null }; S.placing = null; S.autoSent = false;
     if (first) S.focusPending = true;
-    if (!first) afterStep(prev, v);
+    if (!first) afterTurn(prev, v);
     else S.seenSeq = Math.max(S.seenSeq, ...(v.report || []).map(r => r.seq), 0);
     S.lastSeq = Math.max(S.lastSeq, ...(v.report || []).map(r => r.seq), 0);
     if (v.myAction){ S.draft.move = v.myAction.move; S.draft.place = v.myAction.place; }
   }
   S.deadline = v.msLeft != null ? Date.now() + v.msLeft : Infinity;
   handlePings(v);
+  if (v.status === 'playing') syncTrades(v); else if (T.mode) closeTradeUI();
   if (v.status === 'over'){ renderGame(); show('game'); showOver(); return; }
   renderGame(); show('game');
   if (S.focusPending && MAP){ S.focusPending = false; requestAnimationFrame(() => requestAnimationFrame(() => { base = fitBase(); focusMe(); })); }
 }
 
-// sounds and focus after each step resolves
-function afterStep(prev, v){
+// sounds, flashes and focus after each turn resolves
+function afterTurn(prev, v){
   const fresh = (v.report || []).filter(r => r.seq > S.lastSeq);
   const kinds = new Set(fresh.map(r => r.kind));
   if (kinds.has('trapped') || kinds.has('trapfired')) Sound.snap();
@@ -582,7 +630,11 @@ function afterStep(prev, v){
   if (fresh.some(r => r.kind === 'collect' && r.who === v.pid)) Sound.chime();
   const meP = v.players[v.pid];
   if (meP && prev && prev.players[v.pid] && prev.players[v.pid].pos !== meP.pos && meP.pos) focusMe(true);
-  const imp = fresh.filter(r => ['trapped','sighting','spotted','voice','bunker','together','collect','arrive','ready'].includes(r.kind) && (r.kind !== 'collect' || r.who === v.pid));
+  const rays = fresh.filter(r => r.kind === 'ray');
+  if (rays.length){ S.flashCont = rays.map(r => r.cont); S.flashUntil = Date.now() + 3000; Sound.zap(); setTimeout(() => { S.flashCont = []; drawMarks(); }, 3100); }
+  if (fresh.some(r => r.kind === 'seduced' && r.who !== v.pid && /distracted/.test(r.text))) Sound.chime();
+  if (fresh.some(r => r.kind === 'rayearned' || (r.kind === 'trapfired'))) setTimeout(Sound.chime, 300);
+  const imp = fresh.filter(r => ['trapped','sighting','spotted','voice','bunker','together','collect','arrive','ready','ray','seduced','frozen','rayearned','trapfired','trade'].includes(r.kind) && (r.kind !== 'collect' || r.who === v.pid));
   if (imp.length) toast(imp[imp.length - 1].text);
 }
 
@@ -602,7 +654,7 @@ function renderGame(){
   const v = S.view, me = meV(); if (!me) return;
   $('#tb-dot').style.background = me.color; $('#tb-name').textContent = me.name;
   const narrow = innerWidth < 820;
-  $('#tb-turn').textContent = v.status === 'over' ? `Game over · turn ${v.turn}` : narrow ? `T${v.turn} · step ${v.step}/2` : `Turn ${v.turn} · step ${v.step} of 2`;
+  $('#tb-turn').textContent = v.status === 'over' ? `Game over · turn ${v.turn}` : narrow ? `Turn ${v.turn}` : `Turn ${v.turn}`;
   renderRivals(); renderRail(); drawMarks(); renderHint(); updateTimer();
   const unseen = (v.report || []).filter(r => r.seq > S.seenSeq).length;
   $('#rep-badge').hidden = !unseen; $('#rep-badge').textContent = unseen;
@@ -620,7 +672,7 @@ function renderRivals(){
     const lab = p.home && REG[p.home] ? REG[p.home].name : p.homeCont != null ? CONT_NAMES[p.homeCont] : '?';
     const seen = p.seen ? `${REG[p.seen.region]?.name || p.seen.region}, ${ago(p.seen.turn)}` : '?';
     const heard = p.heard ? `${CONT_NAMES[p.heard.cont]}, ${ago(p.heard.turn)}` : '?';
-    return `<div class="rival" data-rival="${p.id}">
+    return `<div class="rival ${S.placing === 'seduce' ? 'pickme' : ''}" data-rival="${p.id}">
       <div class="nm"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}<span style="margin-left:auto;font-family:var(--f-mono);font-size:12px;color:var(--muted)">${p.have.length}/7</span></div>
       <div class="slots">${slot('passport')}${slot('face')}${slot('voice')}</div>
       <div class="pips">${[0,1,2,3,4,5,6].map(c => `<span class="pip ${p.have.includes(c) ? 'on' : ''}" title="${RES_NAMES[c]}${p.have.includes(c) ? ' (collected)' : ''}">${resIcon(c)}</span>`).join('')}</div>
@@ -637,23 +689,26 @@ function renderRail(){
     return `<span class="pip ${got ? 'on' : ''}" title="${RES_NAMES[c]}: ${got ? 'collected' : 'in ' + (REG[r]?.name || r)}">${resIcon(c)}</span>`;
   }).join('');
   // identifiers
-  const changed = setHTML('#tray', (v.held || []).length ? v.held.map(h => `<button class="tok" data-ident="${h.id}" aria-label="${h.kind} identifier"><img src="sprites/${h.kind}-${h.sprite}.png" alt=""></button>`).join('')
+  const changed = setHTML('#tray', (v.held || []).length ? v.held.map(h => `<button class="tok" data-ident="${h.id}" aria-label="${h.kind} identifier${h.mine ? ' (yours)' : ''}"><img src="sprites/${h.kind}-${h.sprite}.png" alt="">${h.mine ? '<span class="yours">YOURS</span>' : ''}</button>`).join('')
     : '<span class="empty">No identifiers yet. Green regions next to you hold something.</span>');
   if (changed) $('#tray').querySelectorAll('.tok').forEach(bindToken);
   paintCooldowns();
   // items
-  const canPlace = v.status === 'playing' && v.step === 1 && isExpected() && !isSubmitted();
-  $('#it-op-n').textContent = v.ops; $('#it-trap-n').textContent = v.traps;
-  $('#it-op').disabled = !canPlace || (v.ops < 1 && !(S.draft.place && S.draft.place.kind === 'op'));
-  $('#it-trap').disabled = !canPlace || (v.traps < 1 && !(S.draft.place && S.draft.place.kind === 'trap'));
-  $('#it-op').classList.toggle('on', S.placing === 'op' || (S.draft.place && S.draft.place.kind === 'op'));
-  $('#it-trap').classList.toggle('on', S.placing === 'trap' || (S.draft.place && S.draft.place.kind === 'trap'));
+  const canPlace = v.status === 'playing' && isExpected() && !isSubmitted();
+  const counts = { op:v.ops, trap:v.traps, ray:v.rays, seduce:v.seducers };
+  ['op','trap','ray','seduce'].forEach(k => {
+    const b = $('#it-' + k), mine = S.draft.place && S.draft.place.kind === k;
+    $('#it-' + k + '-n').textContent = counts[k];
+    b.disabled = !canPlace || (counts[k] < 1 && !mine);
+    b.classList.toggle('on', S.placing === k || !!mine);
+  });
+  $('#it-ray-p').textContent = `${v.rayPoints}/3 spotted`;
   // actions
   const exp = isExpected(), sub = isSubmitted();
   $('#btn-end').hidden = !(v.canEnd && exp && !sub);
   $('#btn-done').hidden = !exp || sub || v.status !== 'playing';
   $('#btn-change').hidden = !(exp && sub);
-  $('#btn-done').disabled = !(me.sea || S.draft.move) || S.sending;
+  $('#btn-done').disabled = !(me.sea || v.frozen > 0 || S.draft.move) || S.sending;
   $('#status').innerHTML = statusText();
 }
 function statusText(){
@@ -661,17 +716,21 @@ function statusText(){
   if (v.status === 'over') return 'The game is over.';
   if (!isExpected()){
     if (me.sea) return `<b>At sea</b> on the way to ${esc(REG[me.sea.dest].name)}. Arrival: turn ${me.sea.arrive}.`;
-    return 'Nothing to do this step. Waiting for the others.';
+    if (v.frozen > 0) return `<b>Distracted</b> by a Seductress. You can't move this turn.`;
+    return 'Nothing to do this turn. Waiting for the others.';
   }
   if (isSubmitted()){
     const waiting = v.expected.filter(id => !v.submitted.includes(id)).map(id => esc(v.players[id].name));
     return waiting.length ? `Locked in. Waiting for <b>${waiting.join(', ')}</b>.` : 'Locked in.';
   }
   if (v.canEnd) return '<b>You made it.</b> End the world, or keep moving.';
-  if (me.sea) return `<b>At sea</b> to ${esc(REG[me.sea.dest].name)}. You can still place an item, then tap Done.`;
-  const mv = S.draft.move;
+  if (S.placing === 'ray') return 'Tap any region to fire the Space Ray at its whole continent.';
+  if (S.placing === 'seduce') return "Tap a rival's card to send them your Seductress.";
   if (S.placing) return `Tap any region to place your ${S.placing === 'op' ? 'operative' : 'trap'}.`;
-  if (!mv) return v.step === 1 ? 'Step 1: place an item if you like, then pick a green region to move to.' : 'Step 2: pick a green region to move to.';
+  if (me.sea) return `<b>At sea</b> to ${esc(REG[me.sea.dest].name)}. You can still use an item, then tap Done.`;
+  if (v.frozen > 0) return `<b>Distracted</b> by a Seductress: no moving this turn. Use an item if you like, then tap Done.`;
+  const mv = S.draft.move;
+  if (!mv) return 'Use an item if you like, then pick a green region to move to.';
   if (mv.startsWith('route:')){ const rt = ROUTES.find(r => r.id === mv.slice(6)); const dest = rt.a === me.pos ? rt.b : rt.a;
     return `Ship to <b>${esc(REG[dest].name)}</b>: ${rt.turns} turn${rt.turns > 1 ? 's' : ''} at sea. Tap Done.`; }
   return `Moving to <b>${esc(REG[mv].name)}</b>. Tap Done to lock it in.`;
@@ -679,9 +738,13 @@ function statusText(){
 function renderHint(){
   const v = S.view, me = meV(), h = $('#maphint'); if (!me) return;
   const pills = [];
-  if (v.status === 'playing' && isExpected() && !isSubmitted() && S.draft.place)
-    pills.push(`<div class="pill">${S.draft.place.kind === 'op' ? 'Operative' : 'Trap'} goes to <b>${esc(REG[S.draft.place.region].name)}</b></div>`);
-  const fresh = (v.report || []).filter(r => r.turn === v.turn - (v.step === 1 ? 1 : 0) && (v.step === 1 ? r.step === 2 : r.step === 1) && ['trapped','sighting','voice','bunker','together'].includes(r.kind)).slice(-2);
+  const pl = S.draft.place;
+  if (v.status === 'playing' && isExpected() && !isSubmitted() && pl){
+    const what = pl.kind === 'op' ? `Operative goes to <b>${esc(REG[pl.region].name)}</b>` : pl.kind === 'trap' ? `Trap goes to <b>${esc(REG[pl.region].name)}</b>`
+      : pl.kind === 'ray' ? `Space Ray will hit <b>${esc(CONT_NAMES[pl.cont])}</b>` : `Seductress goes to <b>${esc(v.players[pl.target].name)}</b>`;
+    pills.push(`<div class="pill">${what}</div>`);
+  }
+  const fresh = (v.report || []).filter(r => r.turn === v.turn - 1 && ['trapped','sighting','voice','bunker','together','ray','frozen','seduced'].includes(r.kind)).slice(-2);
   fresh.forEach(r => pills.push(`<div class="pill">${esc(r.text)}</div>`));
   h.innerHTML = pills.join('');
 }
@@ -696,20 +759,21 @@ function drawMarks(){
   const px = S.px || 1, add = (id, c) => paths[id] && paths[id].classList.add(c);
   // operatives
   (v.myOperatives || []).forEach(r => { (REG[r].neighbors || []).forEach(n => add(n, 'vision')); add(r, 'oprg'); });
-  // red pulse: where I located someone in the step that just resolved
-  const lastStep = v.step === 1 ? { t:v.turn - 1, s:2 } : { t:v.turn, s:1 };
-  (v.report || []).filter(r => r.turn === lastStep.t && r.step === lastStep.s && (r.kind === 'sighting' || r.kind === 'together')).forEach(r => {
+  // red pulse: where I located someone in the turn that just resolved
+  (v.report || []).filter(r => r.turn === v.turn - 1 && (r.kind === 'sighting' || r.kind === 'together')).forEach(r => {
     if (r.op){ add(r.op, 'pulse'); REG[r.op].neighbors.forEach(n => add(n, 'pulse')); } else add(r.region, 'pulse');
   });
   // hints, legal moves
   (v.hints || []).forEach(r => add(r, 'hint'));
-  const act = !over && isExpected() && !isSubmitted() && !me.sea;
+  const act = !over && isExpected() && !isSubmitted() && !me.sea && !(v.frozen > 0);
   if (act && !S.placing){
     const L = legal();
     L.regions.forEach(r => add(r, 'legal'));
     L.routes.forEach(({ rt, dest }) => { add(dest, 'legal'); rt.el.forEach(e => e.setAttribute('class', 'route mine')); });
   }
   if (me.pos) add(me.pos, 'cur');
+  if (S.draft.place && S.draft.place.kind === 'ray') MAP.regions.filter(r => r.ci === S.draft.place.cont).forEach(r => add(r.id, 'raysel'));
+  if (S.flashCont.length && Date.now() < S.flashUntil) MAP.regions.filter(r => S.flashCont.includes(r.ci)).forEach(r => add(r.id, 'flash'));
   if (me.home) add(me.home, 'home');
   const mv = S.draft.move;
   if (mv && !mv.startsWith('route:')) add(mv, 'target');
@@ -724,14 +788,23 @@ function drawMarks(){
   // my uncollected resources
   Object.entries(v.resources || {}).forEach(([c, r]) => {
     if (v.have.includes(+c)) return; const L = REG[r].label, s = 18 * px;
-    el('circle', { cx:L[0], cy:L[1], r:s * .62, fill:'#131518', stroke:'#e0b23a', 'stroke-width':1.2 * px }, gMarks);
-    el('use', { href:'#res-' + c, x:L[0] - s / 2, y:L[1] - s / 2, width:s, height:s }, gMarks);
+    el('rect', { x:L[0] - s * .62, y:L[1] - s * .62, width:s * 1.24, height:s * 1.24, rx:3 * px, fill:'#131518', stroke:'#e0b23a', 'stroke-width':1.4 * px }, gMarks);
+    el('image', { href:`sprites/res-${c}.png`, x:L[0] - s / 2, y:L[1] - s / 2, width:s, height:s }, gMarks);
   });
   // my traps
   (v.myTraps || []).forEach(r => { const L = REG[r].label; icon('sprites/trap.png', L[0] + 10 * px, L[1] + 10 * px, 16 * px); });
   (v.myOperatives || []).forEach(r => { const L = REG[r].label; icon('sprites/operative.png', L[0] - 10 * px, L[1] + 10 * px, 16 * px); });
   // draft placement
-  if (S.draft.place){ const L = REG[S.draft.place.region].label; icon(`sprites/${S.draft.place.kind === 'op' ? 'operative' : 'trap'}.png`, L[0], L[1] + 14 * px, 22 * px, { opacity:.6 }); }
+  if (S.draft.place && S.draft.place.region){ const L = REG[S.draft.place.region].label; icon(`sprites/${S.draft.place.kind === 'op' ? 'operative' : 'trap'}.png`, L[0], L[1] + 14 * px, 22 * px, { opacity:.6 }); }
+  // something to pick up next door: a bright marker as well as the glow
+  (v.hints || []).forEach(r => { const L = REG[r].label;
+    el('circle', { cx:L[0], cy:L[1], r:8 * px, fill:'#4fd6ff', stroke:'#131518', 'stroke-width':2 * px }, gMarks);
+    const t = el('text', { x:L[0], y:L[1] + .5 * px, 'font-size':11 * px, 'font-weight':'700', fill:'#131518', 'text-anchor':'middle', 'dominant-baseline':'middle', 'font-family':'IBM Plex Sans, sans-serif' }, gMarks); t.textContent = '?'; });
+  // numbered badges where connections leave one edge of the map and come back on the other
+  WRAPS.forEach(w => {
+    const g = el('g', {}, gMarks); el('title', {}, g).textContent = w.label;
+    el('circle', { cx:w.x, cy:w.y, r:9 * px, fill:'#131518', stroke:w.color, 'stroke-width':1.6 * px }, g);
+    const t = el('text', { x:w.x, y:w.y + .5 * px, 'font-size':11 * px, 'font-weight':'700', fill:w.color, 'text-anchor':'middle', 'dominant-baseline':'middle', 'font-family':'IBM Plex Mono, monospace' }, g); t.textContent = w.n; });
   // rivals I've seen (face assigned)
   v.players.forEach(p => {
     if (p.id === v.pid) return;
@@ -780,39 +853,49 @@ function onRegionTap(id){
   const v = S.view; if (!v || v.status !== 'playing'){ if (v) toast(REG[id].name); return; }
   if (!isExpected() || isSubmitted()){ toast(`${REG[id].name}${isSubmitted() ? ' · tap Change my move first' : ''}`); return; }
   const me = meV();
+  if (S.placing === 'seduce'){ toast("Tap a rival's card to choose who gets the Seductress."); return; }
+  if (S.placing === 'ray'){ S.draft.place = { kind:'ray', cont:REG[id].ci }; S.placing = null; renderGame(); return; }
   if (S.placing){
     if (S.placing === 'trap' && (v.myTraps || []).includes(id)){ toast('You already have a trap there.'); return; }
     S.draft.place = { kind:S.placing, region:id }; S.placing = null; renderGame(); return;
   }
   if (me.sea){ toast('You are at sea until your ship arrives.'); return; }
+  if (v.frozen > 0){ toast("You're distracted and can't move this turn."); return; }
   const L = legal();
   if (L.regions.includes(id)){ S.draft.move = id; renderGame(); return; }
   const r = L.routes.find(x => x.dest === id);
   if (r){ S.draft.move = 'route:' + r.rt.id; renderGame(); return; }
-  if (id === me.pos) toast('You have to move every step.');
+  if (id === me.pos) toast('You have to move every turn.');
   else toast(`${REG[id].name} isn't next to you. Pick a green region.`);
 }
 function toggleItem(kind){
   const v = S.view;
   if (S.draft.place && S.draft.place.kind === kind){ S.draft.place = null; S.placing = null; renderGame(); return; }
   if (S.placing === kind){ S.placing = null; renderGame(); return; }
-  if ((kind === 'op' ? v.ops : v.traps) < 1) return;
+  if (({ op:v.ops, trap:v.traps, ray:v.rays, seduce:v.seducers })[kind] < 1) return;
   S.draft.place = null; S.placing = kind; renderGame();
 }
 $('#it-op').onclick = () => toggleItem('op');
 $('#it-trap').onclick = () => toggleItem('trap');
+$('#it-ray').onclick = () => toggleItem('ray');
+$('#it-seduce').onclick = () => toggleItem('seduce');
+// choosing a Seductress target by tapping a rival card
+$('#rivals').addEventListener('click', e => {
+  const card = e.target.closest('.rival'); if (!card || S.placing !== 'seduce') return;
+  S.draft.place = { kind:'seduce', target:Number(card.dataset.rival) }; S.placing = null; renderGame();
+});
 
 async function submit(extra = {}){
   const v = S.view; if (S.sending) return;
   S.sending = true; renderRail();
-  const r = await api('submit', { code:S.code, token:S.token, turn:v.turn, step:v.step, move:S.draft.move, place:S.draft.place, ...extra });
+  const r = await api('submit', { code:S.code, token:S.token, turn:v.turn, move:S.draft.move, place:S.draft.place, ...extra });
   S.sending = false;
   if (r.view) apply(r.view);
   if (!r.ok) toast(r.error); else renderGame();
 }
 $('#btn-done').onclick = () => submit();
 $('#btn-end').onclick = () => { Sound.rumble(); submit({ end:true, move:null }); };
-$('#btn-change').onclick = async () => { const v = S.view; const r = await api('unsubmit', { code:S.code, token:S.token, turn:v.turn, step:v.step }); if (r.view) apply(r.view); if (!r.ok) toast(r.error); };
+$('#btn-change').onclick = async () => { const v = S.view; const r = await api('unsubmit', { code:S.code, token:S.token, turn:v.turn }); if (r.view) apply(r.view); if (!r.ok) toast(r.error); };
 
 /* timer: send picks when time runs out */
 function updateTimer(){
@@ -820,7 +903,7 @@ function updateTimer(){
   if (!v || v.status !== 'playing' || !isFinite(S.deadline)){ t.textContent = v && v.status === 'playing' && v.timer === 0 ? '∞' : '—'; t.title = 'No timer'; t.classList.remove('low'); return; }
   const s = Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000));
   t.textContent = s + 's'; t.classList.toggle('low', s <= 5);
-  if (s === 0 && !S.autoSent && isExpected() && !isSubmitted() && (S.draft.move || meV().sea)){ S.autoSent = true; submit(); }
+  if (s === 0 && !S.autoSent && isExpected() && !isSubmitted() && (S.draft.move || meV().sea || v.frozen > 0)){ S.autoSent = true; submit(); }
 }
 setInterval(updateTimer, 250);
 
@@ -898,13 +981,13 @@ function handlePings(v){
 }
 
 /* ================= report ================= */
-const TAG = { sighting:'Sight', spotted:'Seen', voice:'Voice', together:'Close', trapped:'Trap', trapfired:'Trap', collect:'Loot', pickup:'Pickup', placed:'Placed', board:'Ship', arrive:'Ship', assign:'Intel', bunker:'Bunker', timeout:'Time', ready:'Ready', win:'End', draw:'End' };
-const HOTK = new Set(['sighting','spotted','voice','together','trapped','bunker']);
+const TAG = { ray:'Ray', rayfired:'Ray', rayearned:'Ray', seduced:'Charm', frozen:'Frozen', trade:'Trade', sighting:'Sight', spotted:'Seen', voice:'Voice', together:'Close', trapped:'Trap', trapfired:'Trap', collect:'Loot', pickup:'Pickup', placed:'Placed', board:'Ship', arrive:'Ship', assign:'Intel', bunker:'Bunker', timeout:'Time', ready:'Ready', win:'End', draw:'End' };
+const HOTK = new Set(['sighting','spotted','voice','together','trapped','bunker','ray','frozen','seduced']);
 $('#btn-report').onclick = () => {
   const v = S.view, list = (v.report || []).slice().reverse();
   let html = '', last = '';
   list.forEach(r => {
-    const g = `Turn ${r.turn} · step ${r.step}`;
+    const g = `Turn ${r.turn}`;
     if (g !== last){ html += `<li class="grp">${g}</li>`; last = g; }
     html += `<li class="e ${HOTK.has(r.kind) ? 'hot' : ''} ${r.public ? 'pub' : ''}"><span class="tg">${TAG[r.kind] || r.kind}</span><span>${esc(r.text)}</span></li>`;
   });
@@ -913,6 +996,94 @@ $('#btn-report').onclick = () => {
   $('#rep-badge').hidden = true; $('#ov-report').hidden = false;
 };
 $('#rep-close').onclick = () => { $('#ov-report').hidden = true; };
+
+/* ================= trading ================= */
+const T = { mode:null, target:null, give:null, tradeId:null };
+const identImg = h => h ? `<img src="sprites/${h.kind}-${h.sprite}.png" alt="${h.kind}">` : '';
+$('#btn-trade').onclick = () => {
+  const v = S.view; if (!v || v.status !== 'playing') return;
+  const out = (v.trades || []).find(t => t.status === 'open' && t.from === v.pid);
+  if (out){ T.mode = 'waiting'; T.tradeId = out.id; renderTrade(); $('#ov-trade').hidden = false; return; }
+  if (!(v.held || []).length){ toast('Pick up an identifier first, then you can trade it.'); return; }
+  T.mode = 'offer'; T.target = null; T.give = null; renderTrade(); $('#ov-trade').hidden = false;
+};
+function pickRow(held, sel, on){
+  T.onPick = on;
+  if (setHTML('#tr-pick', held.length ? held.map(h => `<button class="tok ${h.id === sel ? 'sel' : ''}" data-p="${h.id}" aria-label="${h.kind}">${identImg(h)}${h.mine ? '<span class="yours">YOURS</span>' : ''}</button>`).join('')
+    : '<span class="empty">You have no identifiers to give.</span>'))
+    $('#tr-pick').querySelectorAll('[data-p]').forEach(b => b.onclick = () => T.onPick(b.dataset.p));
+}
+function renderTrade(){
+  const v = S.view, t = (v.trades || []).find(x => x.id === T.tradeId);
+  const setSlot = (sel, h, empty) => { setHTML(sel, h ? identImg(h) : empty); $(sel).classList.toggle('filled', !!h); };
+  $('#tr-who').hidden = T.mode !== 'offer'; $('#tr-pick-label').hidden = T.mode === 'waiting';
+  if (T.mode === 'offer'){
+    $('#tr-title').textContent = 'Offer a trade';
+    $('#tr-text').textContent = 'Pick a rival and one of your identifiers. They can swap any of theirs for it, or say no.';
+    if (setHTML('#tr-who', v.players.filter(p => p.id !== v.pid).map(p => `<button class="btn ${T.target === p.id ? 'gold' : 'ghosty'}" data-t="${p.id}"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</button>`).join('')))
+      $('#tr-who').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { T.target = +b.dataset.t; renderTrade(); });
+    setSlot('#tr-left', v.held.find(h => h.id === T.give), 'You give');
+    setSlot('#tr-right', null, 'They choose');
+    pickRow(v.held, T.give, id => { T.give = id; renderTrade(); });
+    $('#tr-go').hidden = false; $('#tr-go').textContent = 'Offer'; $('#tr-go').disabled = T.target == null || !T.give;
+    $('#tr-no').textContent = 'Cancel';
+  } else if (T.mode === 'waiting'){
+    $('#tr-title').textContent = 'Waiting for an answer';
+    $('#tr-text').textContent = t ? `${v.players[t.to].name} is looking at your offer. You can keep playing; close this window any time.` : '';
+    setSlot('#tr-left', t && t.give, ''); setSlot('#tr-right', null, '…');
+    setHTML('#tr-pick', ''); $('#tr-go').hidden = true; $('#tr-no').textContent = 'Withdraw offer';
+  } else if (T.mode === 'incoming'){
+    $('#tr-title').textContent = 'Trade offer';
+    $('#tr-text').textContent = t ? `${v.players[t.from].name} offers you this ${t.give.kind}. Pick one of yours to swap, or say no.` : '';
+    setSlot('#tr-left', t && t.give, '');
+    setSlot('#tr-right', v.held.find(h => h.id === T.give), 'You give');
+    pickRow(v.held, T.give, id => { T.give = id; renderTrade(); });
+    $('#tr-go').hidden = false; $('#tr-go').textContent = 'Trade'; $('#tr-go').disabled = !T.give;
+    $('#tr-no').textContent = 'No thanks';
+  }
+}
+function closeTradeUI(){ $('#ov-trade').hidden = true; T.mode = null; T.tradeId = null; T.give = null; T.target = null; }
+$('#tr-go').onclick = async () => {
+  if (T.mode === 'offer'){
+    const r = await api('trade', { code:S.code, token:S.token, target:T.target, ident:T.give });
+    if (!r.ok){ toast(r.error); return; }
+    const t = (r.view.trades || []).filter(x => x.status === 'open' && x.from === r.view.pid).pop();
+    if (t){ T.mode = 'waiting'; T.tradeId = t.id; } apply(r.view);
+  } else if (T.mode === 'incoming'){
+    const r = await api('tradeanswer', { code:S.code, token:S.token, trade:T.tradeId, ident:T.give });
+    closeTradeUI();
+    if (!r.ok) toast(r.error); else { Sound.chime(); toast('Trade done.'); }
+    if (r.view) apply(r.view);
+  }
+};
+$('#tr-no').onclick = async () => {
+  if ((T.mode === 'waiting' || T.mode === 'incoming') && T.tradeId){
+    const r = await api('tradeclose', { code:S.code, token:S.token, trade:T.tradeId }); closeTradeUI(); if (r.view) apply(r.view);
+  } else closeTradeUI();
+};
+// the ✕ hides a pending offer without withdrawing it, and turns down an incoming one
+$('#tr-x').onclick = () => { if (T.mode === 'waiting'){ $('#ov-trade').hidden = true; T.mode = null; } else $('#tr-no').onclick(); };
+function syncTrades(v){
+  const trades = v.trades || [];
+  if (T.mode === 'waiting' || (T.mode === null && T.watch)){
+    const t = trades.find(x => x.id === (T.tradeId || T.watch));
+    if (t && t.status !== 'open'){
+      if (t.status === 'done'){ Sound.chime(); toast(`${v.players[t.to].name} took your trade.`); }
+      else if (t.status === 'rejected') toast(`${v.players[t.to].name} said no to your trade.`);
+      if (T.mode === 'waiting') closeTradeUI(); T.watch = null;
+    }
+  }
+  if (T.mode === 'waiting') T.watch = T.tradeId;
+  if (T.mode === 'incoming'){
+    const t = trades.find(x => x.id === T.tradeId);
+    if (!t || t.status !== 'open'){ closeTradeUI(); toast('That trade offer was withdrawn.'); }
+  }
+  const incoming = trades.find(x => x.status === 'open' && x.to === v.pid);
+  if (incoming && T.mode !== 'incoming' && T.mode !== 'offer' && T.mode !== 'waiting'){
+    T.mode = 'incoming'; T.tradeId = incoming.id; T.give = null; $('#ov-trade').hidden = false; Sound.rustle();
+  }
+  if (T.mode) renderTrade();
+}
 
 /* ================= game over + replay ================= */
 function showOver(){
@@ -940,7 +1111,7 @@ function drawReplay(){
     const home = REG[p.home].label; out += `<use href="#ico-star" x="${home[0] - 10}" y="${home[1] - 26}" width="20" height="20" fill="${p.color}"/>`;
   });
   rs.innerHTML = out;
-  $('#rp-label').textContent = `Turn ${h.t} · step ${h.s} · ` + v.players.map((p, k) => `${p.name} ${h.p[k][2]}/7`).join(' · ');
+  $('#rp-label').textContent = `Turn ${h.t} · ` + v.players.map((p, k) => `${p.name} ${h.p[k][2]}/7`).join(' · ');
 }
 $('#rp-range').oninput = drawReplay;
 $('#rp-prev').onclick = () => { $('#rp-range').value = Math.max(0, +$('#rp-range').value - 1); drawReplay(); };
@@ -978,6 +1149,7 @@ const Sound = (() => {
       n.connect(f).connect(g).connect(ctx.destination); n.start(at); tone('sawtooth', 150, 110, at, .16, .05); }); }
   function snap(){ if (!ready()) return; const t = ctx.currentTime, n = noise(.06), g = ctx.createGain(); g.gain.setValueAtTime(.7, t); g.gain.exponentialRampToValueAtTime(.001, t + .06); n.connect(g).connect(ctx.destination); n.start(t); tone('square', 220, 90, t, .18, .12); }
   function chime(){ if (!ready()) return; const t = ctx.currentTime; [784, 988, 1319].forEach((f, i) => tone('sine', f, null, t + i * .09, .6, .18)); }
+  function zap(){ if (!ready()) return; const t = ctx.currentTime; tone('sawtooth', 220, 1760, t, .5, .12); tone('sine', 1760, 440, t + .45, 1.1, .14); tone('square', 110, 55, t + .45, .8, .06); }
   function buzz(){ if (!ready()) return; tone('sawtooth', 140, 120, ctx.currentTime, .35, .12); }
   function rumble(){ if (!ready()) return; const t = ctx.currentTime, n = noise(3), f = ctx.createBiquadFilter(), g = ctx.createGain();
     f.type = 'lowpass'; f.frequency.value = 180; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.9, t + .4); g.gain.exponentialRampToValueAtTime(.001, t + 3);
@@ -985,7 +1157,7 @@ const Sound = (() => {
   function label(){ document.querySelectorAll('.sndbtn').forEach(b => { b.textContent = on ? 'Sound on' : 'Sound off'; b.setAttribute('aria-pressed', String(on)); }); }
   function set(v){ on = v; store.set('sound', v); label(); if (v){ unlock(); setTimeout(sonar, 60); } }
   label();
-  return { sonar, rustle, alert, cough, snap, chime, buzz, rumble, set, get on(){ return on; } };
+  return { sonar, rustle, alert, cough, snap, chime, buzz, rumble, zap, set, get on(){ return on; } };
 })();
 document.querySelectorAll('.sndbtn').forEach(b => b.onclick = () => Sound.set(!Sound.on));
 

@@ -7,7 +7,7 @@ export const M = R.prepareMap(GAMEMAP);
 const TIMER_CHOICES = [30, 45, 60, 0];
 const GRACE_MS = 1200;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-const stepMs = data => { const t = data.timer ?? 30; return t ? t * 1000 : 0; };
+const turnMs = data => { const t = data.timer ?? 30; return t ? t * 1000 : 0; };
 
 class Fail extends Error { constructor(msg, status = 400) { super(msg); this.status = status; } }
 const fail = (m, s) => { throw new Fail(m, s); };
@@ -22,13 +22,13 @@ function me(data, tok) {
 }
 
 function resolveNow(data, now) {
-  R.resolveStep(M, data.game, data.actions || {});
+  R.resolveTurn(M, data.game, data.actions || {});
   data.actions = {};
-  // when nobody has anything to do (everyone at sea with no items), sail on
+  // when nobody has anything to do (everyone at sea or frozen, with no items), play on
   let guard = 0;
-  while (!data.game.over && !R.expectedIds(data.game).length && guard++ < 20) R.resolveStep(M, data.game, {});
+  while (!data.game.over && !R.expectedIds(data.game).length && guard++ < 20) R.resolveTurn(M, data.game, {});
   if (data.game.over) { data.deadline = null; return "over"; }
-  data.deadline = stepMs(data) ? now + stepMs(data) : null;
+  data.deadline = turnMs(data) ? now + turnMs(data) : null;
   return "playing";
 }
 function maybeTimeout(row, now) {
@@ -108,15 +108,15 @@ const handlers = {
     row.data.game = R.newGame(M, L.map(q => q.name));
     L.forEach((q, i) => (q.pid = i));
     row.data.actions = {};
-    row.data.deadline = stepMs(row.data) ? now + stepMs(row.data) : null;
+    row.data.deadline = turnMs(row.data) ? now + turnMs(row.data) : null;
     row.status = "playing";
   },
   submit(row, b, now) {
     if (row.status !== "playing") fail("The game is not running.");
     const p = me(row.data, b.token);
     const g = row.data.game;
-    if (b.turn !== g.turn || b.step !== g.step) fail("That step has already ended.", 409);
-    if (!R.expectedIds(g).includes(p.pid)) fail("You have nothing to do this step.");
+    if (b.turn !== g.turn) fail("That turn has already ended.", 409);
+    if (!R.expectedIds(g).includes(p.pid)) fail("You have nothing to do this turn.");
     const a = R.checkAction(M, g, g.players[p.pid], { move: b.move, place: b.place || null, end: !!b.end });
     if (typeof a === "string") fail(a);
     (row.data.actions ||= {})[p.pid] = a;
@@ -126,8 +126,26 @@ const handlers = {
     if (row.status !== "playing") fail("The game is not running.");
     const p = me(row.data, b.token);
     const g = row.data.game;
-    if (b.turn !== g.turn || b.step !== g.step) fail("That step has already ended.", 409);
+    if (b.turn !== g.turn) fail("That turn has already ended.", 409);
     if (row.data.actions) delete row.data.actions[p.pid];
+  },
+  trade(row, b, now) {
+    if (row.status !== "playing") fail("The game is not running.");
+    const p = me(row.data, b.token);
+    const r = R.offerTrade(row.data.game, p.pid, Number(b.target), String(b.ident), now);
+    if (r.error) fail(r.error);
+  },
+  tradeanswer(row, b) {
+    if (row.status !== "playing") fail("The game is not running.");
+    const p = me(row.data, b.token);
+    const r = R.answerTrade(row.data.game, p.pid, String(b.trade), String(b.ident));
+    if (r.error) fail(r.error);
+  },
+  tradeclose(row, b) {
+    if (row.status !== "playing") fail("The game is not running.");
+    const p = me(row.data, b.token);
+    const r = R.closeTrade(row.data.game, p.pid, String(b.trade));
+    if (r.error) fail(r.error);
   },
   assign(row, b) {
     if (row.status !== "playing") fail("The game is not running.");
