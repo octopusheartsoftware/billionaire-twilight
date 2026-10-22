@@ -4,7 +4,7 @@
 // The deployed function imports that bundle from GitHub pinned to an exact commit.
 // After changing engine/, rebuild the bundle, push, and redeploy with the new commit hash.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { handle } from "https://raw.githubusercontent.com/octopusheartsoftware/billionaire-twilight/a0b98f52cd1ae25faace5a3310b363e873f6ffe5/server/bundle.mjs";
+import { handle } from "https://raw.githubusercontent.com/octopusheartsoftware/billionaire-twilight/a781a0bb2d1f32427ce1b5fa39f80c2fccae1c99/server/bundle.mjs";
 
 const URL = Deno.env.get("SUPABASE_URL")!;
 const KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
